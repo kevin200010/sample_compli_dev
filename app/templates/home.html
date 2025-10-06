@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <!-- Josefin Sans -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+          rel="stylesheet">
+
+    <title>Home Page</title>
+
+</head>
+<body>
+<style>
+    /* to override the bootstrap styles applying to "login,signout, and Not signed up" buttons  */
+    .white,.white:hover{
+        color: white;
+        font-weight: bolder;
+    }
+</style>
+{% include 'imports/index_navbar.html' %}
+
+<!-- First Screen that will slide up and down upon scrolling. -->
+<div class="containerB d-flex align-items-center">
+    <div class="row w-50">
+        <div class="col-md-6 d-flex justify-content-center align-items-center">
+            <div>
+                <div class="welcomeTitleContainer">
+                    <h1 title="Click to Log in" class="welcomeTitleBg josefin-sans-temp" onclick="scrollToFormBox()">
+                        Welcome to Eagle Insights
+                    </h1>
+                    <h1 title="Click to Log in" class="welcomeTitle josefin-sans-temp" onclick="scrollToFormBox()">
+                        Welcome to Eagle Insights
+                    </h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-center align-items-center">
+            <a class="navbar-brand logo" href="https://www.gmobility.com/" title="Click to go to the GMS Home Page">
+                <img src="/static/images/gmsLogo.png" class="eagle">
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Second layered screen that will appear with the login/signup box and is visually under the welcoming screen -->
+<div class="containerB second">
+    {% include 'imports/toast.html' %}
+
+    <div class="box" id="form-box">
+        <b><h1 class="fade show josefin-sans-temp" id="welcome-text">Welcome</h1>
+        </b>
+        <!-- Box that has both forms in and switches back and forth between -->
+        <div id="form-container">
+            <h2 id="form-title" class="gifBackground fade show josefin-sans-temp">Sign into your Eagle Insight
+                Account</h2>
+
+            <!-- Login form -->
+            <form autocomplete="off" id="login-form" class="fade show" action="{{ url_for('main.login') }}"
+                  method="POST">
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                </div>
+                <button type="submit" class="button fade show josefin-sans-temp">Submit</button>
+            </form>
+
+            <!-- Signup form -->
+            <form autocomplete="off" id="signup-form" class="fade hidden" action="{{ url_for('main.signup') }}"
+                  method="POST">
+                <div class="form-group">
+                    <label for="signup-firstname">First Name</label>
+                    <input type="text" class="form-control" id="signup-firstname" name="firstname"
+                           placeholder="Enter first name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-lastname">Last Name</label>
+                    <input type="text" class="form-control" id="signup-lastname" name="lastname"
+                           placeholder="Enter last name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email address</label>
+                    <input type="email" class="form-control" id="signup-email" name="email" placeholder="Enter email"
+                           required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" class="form-control" id="signup-password" name="password"
+                           placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirm Password</label>
+                    <input type="password" class="form-control" id="signup-confirm-password" name="confirm_password"
+                           placeholder="Confirm Password" required>
+                </div>
+                <button type="submit" class="button mt-3 fade josefin-sans-temp">Sign Up</button>
+            </form>
+            <p id="toggle-form" class="fade show">
+                <a href="#" class="nav-link white text" onclick="toggleForm(event)">Need to sign up? Click here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+{% include 'imports/otp.html' %}
+{% include 'imports/footer.html' %}
+
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+<script src="{{ url_for('static', filename='js/otp.js') }}"></script>
+<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+<script src="{{ url_for('static', filename='js/signup.js') }}"></script>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+</html>

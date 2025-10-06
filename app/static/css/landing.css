@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;700&display=swap');
+@import url('welcome.css');
+@import url('navbar.css');
+@import url('accordion.css');
+@import url('loader.css');
+@import url('sidebar.css');
+@import url('modal.css');
+@import url('carousel.css');
+@import url('buttons.css');
+
+:root {
+    --sans: "Soehne", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --serif: "Signifier", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --mono: "Soehne Mono Buch", Courier, monospace;
+}
+.containerB, .containerE {
+    text-align: center;
+    color: black;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-size: cover;
+    background-position: center;
+    font-family: 'Red Hat Text', sans-serif;
+    position: relative;
+}
+.containerB {
+    background-image: url('/static/images/sky.jpg');
+}
+.containerE {
+    background-image: url('/static/images/chicago.jpg');
+}
+
+
+.containerD {
+    background-color: rgba(255, 255, 255, 0.3); /* Light background for contrast */
+    backdrop-filter: blur(10px);
+    position: absolute;
+    top: 9%;
+    bottom: 7%;
+    right: 1%;
+    left: 15%;
+    border-radius: 3px;
+    /* min-height: auto; */
+    padding: 60px;
+
+    text-align: center;
+    border: 2px solid black; /* Black border */
+    
+    overflow-y: auto;
+}
+
+/* when the "login" button on home is clicked it smoothly rolls down to the box instead of blinking */
+html {
+    scroll-behavior: smooth;
+}
+a {
+    font-weight: bold;
+}
+h1,h2,label{
+    color: #ffffff;
+}
+body {
+    font-family: 'Red Hat Text', sans-serif;
+    color: #ffffff;
+}
+
+.second {
+  background-image: url('/static/images/chicago.jpg');
+  background-attachment: fixed;
+  height: 1200px;
+  flex-direction: row;
+  gap: 1.6em;
+}
+
+.box {
+    background-color: rgba(0, 0, 0, 0.9); /* Light background for contrast */
+    backdrop-filter: blur(5px);
+    border-radius: 20px;
+    padding: 40px;
+    width: 90%;
+    max-width: 700px; 
+
+    text-align: center;
+    box-shadow: 0 0 100px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease;
+}
+.box2 {
+    background-color: rgba(0, 0, 0, 0.6); /* Light background for contrast */
+    backdrop-filter: blur(5px);
+    border-radius: 4px;
+    padding: 10px;
+    width: 90%;
+    max-width: 700px; 
+    
+    height: 50vh;
+    overflow-y: auto;
+
+    text-align: center;
+    box-shadow: 0 0 100px 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease;
+}
+
+.josefin-sans-temp {
+    font-family: "Josefin Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.fade-in {
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
+}
+
+.hidden {
+    display: none;
+}
+.box.expanded {
+    max-width: 800px; 
+}
+.fade {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+.fade.show {
+    opacity: 1;
+}
+
+.gifBackground{
+    background-image: url(https://i.makeagif.com/media/3-04-2016/1htc8R.gif);
+    background-size: cover;
+    font-weight: bolder;
+    color: transparent;
+    -moz-background-clip: text;
+    -webkit-background-clip: text;
+}
+
+.text {
+    color: white;
+}
+.white{
+    color: white;
+    font-weight: bolder;
+}
+
+.center2{
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.clear{
+    background-color: transparent;
+    border: 0;
+}
+
+#toast-container {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+.scroll{
+    overflow-y: auto;
+    max-height: 30vh; /* Adjust as needed */
+
+}
+
+.download{
+    color: black;
+    font-size: larger;
+}

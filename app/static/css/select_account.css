@@ -1,0 +1,25 @@
+html, body {
+    height: 100%; /* Set the height of the body and HTML to fill the entire viewport */
+}
+
+body {
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    background-image: url('/static/images/chicago.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+h1{
+    text-shadow: black 1px 0 10px;
+}
+h1:hover{
+    transition: 1s all;
+}
+h2, div, h3 {
+    color: whitesmoke;
+}
+h4{
+    margin-top: 7px;
+    font-size: 20px;
+}

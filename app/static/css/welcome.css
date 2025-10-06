@@ -1,0 +1,43 @@
+.welcomeTitleContainer {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.welcomeTitle {
+    position: absolute;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 7vw;
+    font-weight: bold;
+    background-image: url(https://i.makeagif.com/media/3-04-2016/1htc8R.gif);
+    background-size: cover;
+    color: transparent;
+    letter-spacing: 4px;
+    transition: all 0.5s;
+    -moz-background-clip: text;
+    -webkit-background-clip: text;
+}
+.welcomeTitle:hover, .welcomeTitleBg:hover {
+    letter-spacing: 0px;
+    transition: all 0.5s;
+}
+.welcomeTitleBg {
+    position: absolute;
+    cursor: pointer;
+    transition: all 0.5s;
+    font-family: Arial, sans-serif;
+    font-size: 7.05vw;
+    color: transparent;
+    font-weight: bold;
+    text-shadow: 0px 0px 2px rgb(48, 47, 47);
+}
+.eagle {
+    transition: transform 0.3s ease; /* Smooth transition for scaling */
+}
+
+.eagle:hover {
+    transform: scale(1.05); /* Scale image to 105% of its original size */
+}

@@ -1,0 +1,91 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex align-items-center">
+                    <p class="mb-0">Add Account</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-uppercase text-sm">Account Information</p>
+                <form action="" method="POST">
+                    <div class="row">
+                        {{ form.hidden_tag() }}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="example-text-input">Alias</label>
+                                {% if form.alias.errors %}
+                                {{ form.alias(class="form-control is-invalid",placeholder="Enter Alias
+                                Name*") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.alias.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                {{ form.alias(class="form-control", placeholder="Enter Alias Name*") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="example-text-input">Access Key</label>
+                                {% if form.access_key.errors %}
+                                {{ form.access_key(class="form-control is-invalid",placeholder="Enter Access Key*") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.access_key.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                {{ form.access_key(class="form-control", placeholder="Enter Access Key*") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="example-text-input">Secret Key</label>
+                                {% if form.secret_key.errors %}
+                                {{ form.secret_key(class="form-control is-invalid",placeholder="Enter Secret Key*") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.secret_key.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                {{ form.secret_key(class="form-control", placeholder="Enter Secret Key*") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label" for="example-text-input">Default Region</label>
+                                {% if form.default_region.errors %}
+                                {{ form.default_region(class="form-control is-invalid",placeholder="Enter Default
+                                Region*") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.default_region.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                {{ form.default_region(class="form-control", placeholder="Enter Default Region*") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            {{form.submit(class="btn bg-gradient-primary w-100 my-2 mb-1")}}
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/aws_page.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+          rel="stylesheet">
+
+
+</head>
+<body>
+<!-- loader -->
+
+
+{% include 'imports/loader.html' %}
+{% include 'imports/navbar.html' %}
+{% include 'imports/sidebar.html' %}
+
+<div class="containerD center2">
+
+    <button type="button" class="clear" data-bs-toggle="collapse" data-bs-target="#accordionExample"
+            aria-controls="accordionExample" aria-expanded="false">
+        <h1 class="center2 josefin-sans-temp">AWS Account Details</h1>
+    </button>
+    <br>
+
+
+    <!-- Account Details section -->
+
+    <div class="collapse" id="accordionExample">
+        <div class="card card-body">
+            <!-- User accordion content to display the User's AWS Account information -->
+            <div id="accordion">
+                <div class="card">
+                    <p1><b>Alias:</b> {{account}}</p1>
+                    <p1><b>Access Key ID:</b> {{access_key_id}}</p1>
+                    <p1><b>Secret Access Key:</b> {{secret_access_key}}</p1>
+                    <p1><b>Region:</b> {{default_region_name}}</p1>
+                </div>
+                <form autocomplete="off" action="{{ url_for('account.download_csv', email=email, alias=account) }}"
+                      method="get">
+                    <button class="josefin-sans-temp white download button" type="submit">Download CSV</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- accordions sorted by title and each title will open up to contain the resources -->
+    {% for title, findings in grouped_findings.items() %}
+    <div class="btn-group dropdown">
+        <button type="button"
+                class="btn btn-group-severity btn-secondary {{ 'btn-severity-' ~ findings[0].Severity|lower }}"
+                data-bs-toggle="collapse" data-bs-target="#accordionGroup-{{ title|replace(' ', '-') }}"
+                aria-controls="accordionGroup-{{ title|replace(' ', '-') }}" aria-expanded="false">
+            <div class="accordion-text">
+                <span class="severity-circle {{ 'button-severity-' ~ findings[0].Severity|lower }}"></span>
+                <span>{{ title }} </span>
+                <span class="finding-count"> Findings: {{ findings|length }} </span>
+
+            </div>
+        </button>
+    </div>
+
+    <div class="collapse" id="accordionGroup-{{ title|replace(' ', '-') }}">
+        <div class="card card-body">
+            <!-- Nested accordions for each resource and are all organized by title -->
+            {% for finding in findings %}
+            <div class="accordion" id="nestedAccordion-{{ finding.Id|replace(' ', '-') }}">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-{{ finding.Id|replace(' ', '-') }}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-{{ finding.Id|replace(' ', '-') }}" aria-expanded="true"
+                                aria-controls="collapse-{{ finding.Id|replace(' ', '-') }}">
+                            {{ finding.Resource }}
+                        </button>
+                    </h2>
+                    <div id="collapse-{{ finding.Id|replace(' ', '-') }}" class="accordion-collapse collapse"
+                         aria-labelledby="heading-{{ finding.Id|replace(' ', '-') }}"
+                         data-bs-parent="#nestedAccordion-{{ finding.Id|replace(' ', '-') }}">
+                        <div class="accordion-body">
+                            <!-- Inside of each finding that will have all necessary information about the finding -->
+                            <p><b>Resource:</b> {{ finding.Resource }}</p>
+                            <p><b>ID:</b> {{ finding.Id }}</p>
+                            <p><b>Description:</b> {{ finding.Description }}</p>
+                            <p><b>Severity:</b> {{ finding.Severity }}</p>
+                            <p><b>AwsAccountId:</b> {{ finding.AwsAccountId }}</p>
+                            <p><b>LastObservedAt:</b> {{ finding.LastObservedAt }}</p>
+                            <p><b>Recommendation URL:</b> <a href="{{ finding.RecommendationUrl }}" target="_blank">{{
+                                finding.RecommendationUrl }}</a></p>
+                            {% if finding.Details %}
+                            <p><b>Details:</b></p>
+                            <ul>
+                                {% for detail_key, detail_value in finding.Details.items() %}
+                                <li><b>{{ detail_key }}:</b>
+                                    <ul>
+                                        {% if detail_value is mapping %}
+                                        {% for sub_key, sub_value in detail_value.items() %}
+                                        <li><b>{{ sub_key }}:</b>
+                                            {% if sub_value is iterable and sub_value is not string %}
+                                            <ul>
+                                                {% for item in sub_value %}
+                                                {% if item is mapping %}
+                                                <li>
+                                                    {% for item_key, item_value in item.items() %}
+                                                    <b>{{ item_key }}:</b> {{ item_value }}
+                                                    {% endfor %}
+                                                </li>
+                                                {% else %}
+                                                <li>{{ item }}</li>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                            {% else %}
+                                            {{ sub_value }}
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                        {% else %}
+                                        {{ detail_value }}
+                                        {% endif %}
+                                    </ul>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p><b>Details:</b> Not available</p>
+                            {% endif %}
+                        </div>
+                        <div class="accordion-body center2">
+
+                            <button type="button" class="button4 print-json-button "
+                                    data-finding='{{ finding | tojson | safe }}'>Get a recommendation with ChatGPT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+<!-- Modal that displays the GPT remediation recommendation output -->
+<div id="gptResultModal" class="modal slide-in-bottom">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header center2">
+                <h2 class="center2 modal-title">Your Insight</h2>
+                <!-- View AWS CLI Commands button in the modal header -->
+                <!-- Close button -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="jsonContent"></div>
+            </div>
+            <div class="modal-footer">
+                <!-- <a id="viewCommandsBtn" href="#" class="btn button4 btn-primary">View AWS CLI Commands</a> -->
+                <button id="viewCommandsBtn" class="button4">View AWS CLI Commands</button>
+                <button type="button" class="btn button4 btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal to have only the Commands to execute -->
+<div id="commandsModal" class="modal fade slide-in-bottom">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header center2">
+                <h2 class="center2 modal-title">AWS CLI Commands</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commandsModalContent">
+                    <form id="commandsForm">
+                        {% for command in aws_cli_commands %}
+                        <div class="command-container">
+                            <input class="input" name="command" type="text" value="{{ command }}">
+                            <button type="button" class="execute">Execute</button>
+                        </div>
+                        {% endfor %}
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn button4 btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'imports/toast.html' %}
+{% include 'imports/footer.html' %}
+
+
+<script src="{{ url_for('static', filename='js/aws_page.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+}
+
+body {
+  background-color: rgb(203, 213, 225);
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+
+.main {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  text-align: center;
+  width: 320px;
+}
+
+.login-box h2 {
+  font-size: 24px;
+  margin-bottom: 1.5rem;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.btn {
+  padding: 0.75em 2em;
+  margin-top: 1.2rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: #1e293b;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    #1CB5E0,
+    #000851,
+    #00C9FF,
+    #92FE9D,
+    #FC466B,
+    #3F5EFB,
+    #3F2B96,
+    #A8C0FF,
+    #FDBB2D,
+    #3A1C71
+  );
+  background-size: 500%;
+  filter: blur(7px);
+  transform: scaleX(1.1) scaleY(1.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: flowing 10s ease infinite;
+}
+
+.btn:hover::after {
+  opacity: 1;
+}
+
+.btn:active {
+  background-color: #0f172a;
+}
+
+.forgot {
+  text-align: left;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.signup-text {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+footer {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+@keyframes flowing {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 400% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+
+}
+
+@keyframes flowing {
+    0% {
+        background-position: 0 0;
+    }
+    50% {
+        background-position: 400% 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}

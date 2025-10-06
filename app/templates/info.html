@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/info.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+          rel="stylesheet">
+
+
+</head>
+<body>
+<!-- loader -->
+{% include 'imports/footer.html' %}
+{% include 'imports/loader.html' %}
+{% include 'imports/navbar.html' %}
+{% include 'imports/sidebar.html' %}
+
+<!-- Carousel that displays all of the current services with a screenshot of them and a caption describing their use along with how to use the service -->
+<div class="containerD center2">
+    <h1>What you can do with Eagle Insights</h1>
+
+    <div id="carouselCaptions" class="shadow carousel slide" data-bs-ride="carousel">
+        <!-- Carousel indicators -->
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselCaptions" data-bs-slide-to="0" class="active"
+                    aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#carouselCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+
+        <!-- Carousel inner content -->
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="/static/images/SecuritySS.png" class="d-block w-100" alt="Vulnerability Remediation">
+                <div class="carousel-caption d-none d-md-block">
+                    <h3>Vulnerability Remediation</h3>
+                    <p>
+                        When you click the "Vulnerability Remediation" button, you will be redirected to a page
+                        displaying all of your critical Security Hub findings. Each finding is detailed, and you can
+                        open them up individually to review specifics.
+                    </p>
+                    <p>
+                        Our system integrates with ChatGPT to provide multiple remediation steps tailored to each
+                        finding. Additionally, you have the option to execute the recommended AWS CLI commands directly
+                        from this interface, streamlining the remediation process and helping to reduce vulnerabilities
+                        in your AWS account.
+                    </p>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <img src="/static/images/PciSS.png" class="d-block w-100" alt="PCI Analysis">
+                <div class="carousel-caption d-none d-md-block">
+                    <h3>PCI Analysis</h3>
+                    <p>
+                        The "PCI Analysis" button initiates a compliance analysis of your AWS services, focusing on PCI
+                        DSS. The analysis identifies areas of non-compliance, with results compiled into a detailed PDF
+                        report that includes recommendations to achieve full compliance, ensuring customer data
+                        protection.
+                    </p>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <img src="/static/images/HipaaSS.png" class="d-block w-100" alt="Hipaa Analysis">
+                <div class="carousel-caption d-none d-md-block">
+                    <h3>Hipaa Analysis</h3>
+                    <p>
+                        Clicking the "Hipaa Analysis" button triggers an examination of your AWS services against HIPAA
+                        regulations. The results, compiled into a PDF report, will highlight areas of non-compliance and
+                        provide actionable recommendations to ensure your AWS environment is HIPAA-compliant.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselCaptions" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselCaptions" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+
+
+</div>
+
+<script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

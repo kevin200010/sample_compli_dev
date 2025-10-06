@@ -1,0 +1,202 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!-- Highcharts Library -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<!-- Custom CSS -->
+<style>
+    .card { border-radius: 12px; }
+    .chart-container { height: 400px; }
+    .table-container { max-height: 450px; overflow-y: auto; }
+</style>
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center text-white">AWS Billing and Cost Management</h2>
+            <p class="text-center text-white">Monitor your cloud expenses effectively</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-dark shadow-lg border-0 rounded-3">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-secondary">Total Cost (Last 365 Days)</h5>
+                    <h2 class="fw-bold text-primary">$ {{ total_cost if total_cost > 0 else 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-dark shadow-lg border-0 rounded-3">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-secondary">Month-To-Date (MTD) Cost</h5>
+                    <h2 class="fw-bold text-primary">$ {{ mtd_cost if mtd_cost > 0 else 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-dark shadow-lg border-0 rounded-3">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-secondary">Forecasted Cost (This Month)</h5>
+                    <h2 class="fw-bold text-primary">$ {{ forecasted_cost if forecasted_cost > 0 else 0 }}</h2>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-container" id="costOverTimeChart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <a class="btn btn-outline-primary mt-3 fw-semibold shadow-sm"
+               href="{{ url_for('account.cost_optimization') }}">
+                Full Cost Breakdown with <span class="text-info">Complitru</span> Recommendations
+            </a>
+            <div class="card text-dark shadow">
+                <div class="card-body">
+                    <h5>Highest Spent Service</h5>
+                    <h2>{{ highest_service.service }}</h2>
+                    <h2> ($ {{ highest_service.cost if highest_service.cost > 0 else 0 }})</h2>
+                </div>
+            </div>
+            <div class="card text-dark shadow my-4">
+                <div class="card-body">
+                    <h5>Last Month's Total Cost</h5>
+                    <h2>$ {{ last_month_total_cost if last_month_total_cost > 0 else 0 }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Service-Wise Cost Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="serviceBreakdownChart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Detailed Cost Breakdown</h5>
+                    <div>
+                        <a class="btn btn-primary me-2" href="{{ url_for('account.cost_optimization_csv') }}"
+                           id="download-csv">Download
+                            CSV</a>
+                        <a class="btn btn-secondary" href="{{ url_for('account.cost_optimization_pdf') }}"
+                           id="download-pdf">Download PDF</a>
+                    </div>
+                </div>
+                <div class="card-body table-container">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Service</th>
+                            <th>Cost (USD)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record in data %}
+                        <tr>
+                            <td>{{ record.Date }}</td>
+                            <td>{{ record.Service }}</td>
+                            <td>${{ "%.2f"|format(record['Cost (USD)']|float if record['Cost (USD)']|float > 0 else 0)
+                                }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cost Over Time Chart (Monthly Data) -->
+<script>
+    Highcharts.chart('costOverTimeChart', {
+        chart: { type: 'line' },
+        title: { text: 'Cost Over Time (Monthly)' },
+        xAxis: {
+            categories: {{ months|tojson }},
+            title: { text: 'Month' }
+        },
+        yAxis: {
+            title: { text: 'Cost (USD)' },
+            labels: { formatter: function() { return '$' + Math.max(this.value, 0).toFixed(2); } }
+        },
+        credits: {
+            enabled: false
+        },
+        tooltip: {
+            pointFormat: 'Cost: <b>${point.y:.2f}</b>'
+        },
+        series: [{
+            name: 'Cost (USD)',
+            data: {{ monthly_costs|map('float')|list|map('abs')|list|tojson }}
+        }]
+    });
+</script>
+
+<!-- Service-Wise Cost Breakdown Chart (Bar Graph) -->
+<script>
+    Highcharts.chart('serviceBreakdownChart', {
+        chart: { type: 'bar' },
+        title: { text: 'Service-Wise Cost Breakdown' },
+        xAxis: {
+            categories: {{ services_breakdown|map(attribute='name')|list|tojson }},
+            title: { text: 'Service' }
+        },
+        yAxis: {
+            title: { text: 'Cost (USD)' },
+            labels: { formatter: function() { return '$' + Math.max(this.value, 0).toFixed(2); } }
+        },
+        credits: {
+            enabled: false
+        },
+        tooltip: {
+            pointFormat: 'Cost: <b>${point.y:.2f}</b>'
+        },
+        series: [{
+            name: 'Service Cost (USD)',
+            data: {{ services_breakdown|map(attribute='y')|list|map('float')|list|map('abs')|list|tojson }}
+        }]
+    });
+
+document.querySelector('#download-pdf').addEventListener('click', function () {
+    showLoader();
+
+    // Assume the file will download in 5 seconds
+    setTimeout(() => {
+        hideLoader();
+    }, 8000); // Adjust this time based on your average download duration
+});
+
+document.querySelector('#download-csv').addEventListener('click', function () {
+    showLoader();
+
+    // Assume the file will download in 5 seconds
+    setTimeout(() => {
+        hideLoader();
+    }, 8000); // Adjust this time based on your average download duration
+});
+</script>
+{% endblock %}

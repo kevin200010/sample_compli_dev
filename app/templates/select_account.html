@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage AWS Accounts</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select_account.css') }}">
+
+    <!-- Josefin Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+          rel="stylesheet">
+
+
+</head>
+<body>
+{% include 'imports/navbar.html' %}
+
+<div class="collapse" id="accordionDown-{{account}}">
+</div>
+<div class="d-flex justify-content-center">
+    <div class="containerE">
+        <h1 class="mb-4 josefin-sans-temp">Manage AWS Accounts for {{ firstname }} {{ lastname }}</h1>
+
+        <div class="box2" id="form-box">
+            <div id="form-container">
+                <!-- Add AWS Account Form -->
+                <form autocomplete="off" id="add-account-form" class="hidden"
+                      action="{{ url_for('account.add_account', email=email) }}" method="POST">
+                    <div class="form-group">
+                        <h4 for="alias">Unique Alias:</h4>
+                        <input type="text" class="form-control" id="alias" name="alias" placeholder="Alias" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="access_key_id">Access Key ID:</h4>
+                        <input type="text" class="form-control" id="access_key_id" name="access_key_id"
+                               placeholder="Access Key ID" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="secret_access_key">Secret Access Key:</h4>
+                        <input type="text" class="form-control" id="secret_access_key" name="secret_access_key"
+                               placeholder="Secret Access Key" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="default_region_name">Default Region Name:</h4>
+                        <input type="text" class="form-control" id="default_region_name" name="default_region_name"
+                               placeholder="Default Region Name" required>
+                    </div>
+                    <button type="submit" class="button4 btn-primary">Add Account</button>
+                </form>
+
+
+                <!-- Update or Remove AWS Account Form -->
+                <form autocomplete="off" id="manage-account-form" class="hidden" action="/manage_account" method="post">
+                    <h2 for="account">Select Your Account:</h2>
+
+                    <div>
+                        {% for account in user_aws_accounts %}
+                        <div>
+                            <div class="btn-group dropdown">
+                                <button type="button" class="btn btn-group2 btn-secondary"
+                                        onclick="selectAccount('{{ account.alias }}')"> {{account.alias}}
+                                </button>
+                                <div>
+                                    <button type="button" class="Update-Remove-Button"
+                                            onclick="updateAccount('{{ account.alias }}')">Update
+                                    </button>
+                                    <button type="button" class="Update-Remove-Button"
+                                            onclick="removeAccount('{{ account.alias }}')">Remove
+                                    </button>
+                                    <input type="hidden" name="email" value="{{ current_user.email }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+
+                <!-- Update AWS Account Form that will appear if the Update button is pressed above -->
+                <form autocomplete="off" id="update-account-form" class="hidden"
+                      action="{{ url_for('account.update_account') }}" method="POST">
+                    <input type="hidden" name="account" id="update-account">
+                    <div class="form-group">
+                        <h4 for="alias">Alias:</h4>
+                        <input type="text" class="form-control" name="alias" id="update-alias" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="access_key_id">Access Key ID:</h4>
+                        <input type="text" class="form-control" name="access_key_id" id="update-access_key_id" required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="secret_access_key">Secret Access Key:</h4>
+                        <input type="text" class="form-control" name="secret_access_key" id="update-secret_access_key"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <h4 for="default_region_name">Default Region Name:</h4>
+                        <input type="text" class="form-control" name="default_region_name"
+                               id="update-default_region_name" required>
+                    </div>
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+
+
+            </div>
+        </div>
+
+        <!-- The buttons that can switch in between adding an account or select/update/removing an aws account -->
+        <div class="d-flex justify-content-center mb-4">
+            <div class="d-flex justify-content-center mb-4">
+                <button class="button mr-2" onclick="showForm('add')" id="add-account-btn">Add AWS Account</button>
+                <button class="button" onclick="showForm('select_remove')" id="manage-account-btn">Manage existing AWS
+                    Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'imports/toast.html' %}
+{% include 'imports/footer.html' %}
+
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-sU3xZ5bRAO8VeCk3Oe2vY5qcS4+Kaqf0/5xZCT2L3j5q9ZOZapvp7nfjh0qm5ZFb"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-8/JEslxzdySTAGI5FHP7tvjASU1JUXxP5jrF3TWEUKxJ+R7oJ/BgYotTNKjb9xre"
+        crossorigin="anonymous"></script>
+
+<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+<script src="{{ url_for('static', filename='js/add_account.js') }}"></script>
+<script src="{{ url_for('static', filename='js/select_account.js') }}"></script>
+<script src="{{ url_for('static', filename='js/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

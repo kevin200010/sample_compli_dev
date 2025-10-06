@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta tags for character encoding and viewport settings -->
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <!-- Favicon and Apple Touch Icon links -->
+    <link href="{{config['FAV_ICON']}}" rel="apple-touch-icon" sizes="76x76">
+    <link href="{{config['FAV_ICON']}}" rel="icon" type="image/png">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <!-- Title tag with conditional title based on 'title' variable -->
+    {% if title %}
+    <title>{{config['NAME']}} | {{ title }}</title>
+    {% else %}
+    <title>{{config['NAME']}}</title>
+    {% endif %}
+
+    <!-- Fonts and icons -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet"/>
+
+    <!-- Nucleo Icons -->
+    <link href="{{ url_for('static', filename='assets/css/nucleo-icons.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='assets/css/nucleo-svg.css') }}" rel="stylesheet"/>
+
+    <!-- CSS Files -->
+    <link href="{{ url_for('static', filename='assets/css/argon-dashboard.css') }}?v=2.0.4" id="pagestyle"
+          rel="stylesheet"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Page loader CSS styles -->
+    <style>
+        :root {
+            --primary-color: {{config["UI_COLOR"]}};
+            --primary-gradiant-color: {{config["GRADIENT_UI_COLOR"]}};
+        }
+    </style>
+    <style>
+        /* Loader container - centered on the page */
+        #loader {
+            position: fixed;
+            z-index: 999;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+        }
+    #loader img {
+      width: 150px;
+      animation: bounce 1s infinite;
+    }
+
+    /* Bouncing effect */
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Dots loader */
+    .dots-loader {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      width: 100px;
+    }
+
+    /* Individual dot */
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      animation: blink 1.4s infinite both;
+    }
+
+    /* Blinking effect */
+    @keyframes blink {
+      0% {
+        opacity: 0.2;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0.2;
+      }
+    }
+
+    /* Delay each dot's animation */
+    .dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+    .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    .dot:nth-child(4) {
+      animation-delay: 0.8s;
+    }
+    .dot:nth-child(5) {
+      animation-delay: 1s;
+    }
+        .accordion-body{color:#353b46}
+ .swal-modal {
+    width: auto; /* Allows it to size dynamically based on content */
+    max-width: 90%; /* Limits the width to 90% of the viewport width */
+    min-width: 300px; /* Ensures it doesn't get too small */
+}
+        .btn-primary, .btn.bg-gradient-primary:focus {
+    background-color: var(--primary-color);
+}
+    </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+
+<!-- Page Loader HTML element -->
+<div id="loader">
+    <img alt="Loader Logo" src="{{config['FAV_ICON']}}">
+    <div class="dots-loader">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+</div>
+
+<!-- Background div with a primary color gradient -->
+<div class="min-height-300 bg-primary position-absolute w-100"></div>
+
+<!-- Main content -->
+<main class="main-content position-relative border-radius-lg">
+    <!-- Navbar -->
+    <div class="container position-sticky z-index-sticky top-0">
+        <div class="row">
+            <div class="col-12">
+                <!-- Navbar with links to different pages -->
+                <nav class="navbar navbar-expand-lg blur border-radius-lg top-0 z-index-3 shadow position-absolute mt-4 py-2 start-0 end-0 mx-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand font-weight-bolder ms-lg-0 p-0" href="{{ url_for('account.service_info') }}">
+                            <img alt="GMS Logo" src="{{config['LOGO']}}"
+                                 style="max-width:70px">
+                        </a>
+                        <!-- Navbar toggler for small screens -->
+                        <button aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation"
+                                class="navbar-toggler shadow-none ms-2" data-bs-target="#navigation"
+                                data-bs-toggle="collapse" type="button">
+                                <span class="navbar-toggler-icon mt-2">
+                                    <span class="navbar-toggler-bar bar1"></span>
+                                    <span class="navbar-toggler-bar bar2"></span>
+                                    <span class="navbar-toggler-bar bar3"></span>
+                                </span>
+                        </button>
+                        <!-- Collapsible navbar content -->
+                        <div class="collapse navbar-collapse" id="navigation">
+                            <ul class="navbar-nav mx-auto">
+                                <li class="nav-item">
+                                    <!-- Dashboard link -->
+                                    <a aria-current="page" class="nav-link d-flex align-items-center me-2 active"
+                                       href="{{url_for('account.select_account')}}">
+                                        <i class="fa fa-chart-pie opacity-6 text-dark me-1"></i>
+                                        Accounts
+                                    </a>
+                                </li>
+                                <li class="nav-item nav-item1">
+                                    <a class="nav-link me-2" href="https://gmsautomate.cloud/">
+                                        <i class="fa fa-robot opacity-6 text-dark me-1"></i>
+                                        CompliTru AI Agent
+                                    </a>
+                                </li>
+                                <li class="nav-item nav-item1">
+                                    <!-- Sign-up link -->
+                                    <a class="nav-link me-2" href="{{url_for('account.cost_optimization_home')}}">
+                                        <i class="fa fa-dollar opacity-6 text-dark me-1"></i>
+                                        Cost Assessment
+                                    </a>
+                                </li>
+                                <li class="nav-item nav-item1">
+                                    <!-- Sign-in link -->
+                                    <a class="nav-link me-2" href="{{url_for('account.vulnerability')}}">
+                                        <i class="fas fa-key opacity-6 text-dark me-1"></i>
+                                        Vulnerability
+                                    </a>
+                                </li>
+                                <li class="nav-item nav-item1">
+                                    <!-- Sign-up link -->
+                                    <a class="nav-link me-2" href="{{url_for('account.compliance_check')}}">
+                                        <i class="fa fa-shield opacity-6 text-dark me-1"></i>
+                                        Compliance Check
+                                    </a>
+                                </li>
+<!--                                <li class="nav-item nav-item1">-->
+<!--                                    &lt;!&ndash; Sign-up link &ndash;&gt;-->
+<!--                                    <a class="nav-link me-2" href="{{url_for('account.hipaa_report')}}">-->
+<!--                                        <i class="fa fa-get-pocket opacity-6 text-dark me-1"></i>-->
+<!--                                        Hipaa-->
+<!--                                    </a>-->
+<!--                                </li>-->
+                            </ul>
+                            <ul class="navbar-nav">
+                                <!--                                <li class="nav-item">-->
+                                <!--                                    &lt;!&ndash; Profile link &ndash;&gt;-->
+                                <!--                                    <a class="nav-link me-2" href="{{url_for('main.profile')}}">-->
+                                <!--                                        <i class="fa fa-user opacity-6 text-dark"></i>-->
+                                <!--                                    </a>-->
+                                <!--                                </li>-->
+                                <!-- Sign Out button -->
+                                <li class="nav-item">
+                                    <!-- Sign-in link -->
+                                    <a class="nav-link me-2" href="{{url_for('main.logout')}}">
+                                        <i class="fa fa-power-off opacity-6 text-dark"></i>
+                                    </a>
+                                </li>
+                                <li class="nav-item nav-item1">
+                                    <form action="{{ url_for('account.set_account') }}" id="accountForm" method="POST">
+                                        <select class="btn mb-0 bg-gradient-primary" id="accountDropdown" name="account"
+                                                onchange="this.form.submit()">
+                                            <option class="dropdown-item" value="">Loading accounts...</option>
+                                        </select>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+                <!-- End Navbar -->
+            </div>
+        </div>
+    </div>
+    <!-- End Navbar -->
+
+    <!-- Main container -->
+    <div class="container py-8">
+        <!-- Flash messages (if any) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        {% if message %}
+        <script>
+            swal("{{ message|safe }}", "", "{{category}}");
+        </script>
+        {%endif%}
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="main">
+            <!-- Placeholder for page-specific content -->
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer pt-3" style="margin-top: 60px;">
+            <div class="container-fluid">
+                <div class="row align-items-center justify-content-lg-between">
+                    <!--                    <div class="col-lg-6 mb-lg-0 mb-4">-->
+                    <!--                        &lt;!&ndash; Copyright text with dynamic year &ndash;&gt;-->
+                    <!--                        <div class="copyright text-center text-sm text-muted text-lg-start">-->
+                    <!--                            ©-->
+                    <!--                            <script>-->
+                    <!--                                document.write(new Date().getFullYear())-->
+                    <!--                            </script>-->
+                    <!--                            , made with <i class="fa fa-heart"></i> by-->
+                    <!--                            <a class="font-weight-bold" href="https://www.gmobility.com/" target="_blank">GMS</a>.-->
+                    <!--                        </div>-->
+                    <!--                    </div>-->
+                    <!--                    <div class="col-lg-6">-->
+                    <!--                        &lt;!&ndash; Footer navigation links &ndash;&gt;-->
+                    <!--                        <ul class="nav nav-footer justify-content-center justify-content-lg-end">-->
+                    <!--                            <li class="nav-item">-->
+                    <!--                                <a class="nav-link text-muted" href="https://www.gmobility.com/" target="_blank">GMS</a>-->
+                    <!--                            </li>-->
+                    <!--                            <li class="nav-item">-->
+                    <!--                                <a class="nav-link text-muted" href="" target="_blank">About Us</a>-->
+                    <!--                            </li>-->
+                    <!--                            <li class="nav-item">-->
+                    <!--                                <a class="nav-link text-muted" href="" target="_blank">Blog</a>-->
+                    <!--                            </li>-->
+                    <!--                            <li class="nav-item">-->
+                    <!--                                <a class="nav-link pe-0 text-muted" href="" target="_blank">License</a>-->
+                    <!--                            </li>-->
+                    <!--                        </ul>-->
+                    <!--                    </div>-->
+                    <div class="col-8 mx-auto text-center mt-1">
+                        <p class="mb-0 text-secondary">
+                            Copyright ©
+                            <script>
+                                document.write(new Date().getFullYear())
+                            </script>
+                            by {{config['NAME']}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</main>
+
+<!-- Core JS Files -->
+<script src="{{ url_for('static', filename='assets/js/core/popper.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/core/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/plugins/perfect-scrollbar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/plugins/smooth-scrollbar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/icons.js') }}"></script>
+<script>
+    // Function to fetch accounts and append to dropdown
+    function fetchAccounts() {
+        $.ajax({
+            url: "{{ url_for('get_accounts') }}",  // Fetch accounts from Flask route
+            method: 'GET',
+            success: function(data) {
+                var dropdown = $('#accountDropdown');
+                dropdown.empty(); // Clear any existing options
+
+                if (data.length === 0) {
+                    // Hide the element with the class 'nav-item1' if no data is returned
+                    $('.nav-item1').hide();
+                } else {
+                    // Show the element with the class 'nav-item1' if data is present
+                    $('.nav-item1').show();
+
+                    // Add each account to the dropdown
+                    $.each(data, function(index, account) {
+                        dropdown.append('<option class="dropdown-item" value="' + account[0] + '">' + account[1] + '</option>');
+                    });
+
+                    // Set the selected account if available
+                    var activeAccount = "{{ session.get('selected_account') }}";
+                    if (activeAccount) {
+                        $('#accountDropdown').val(activeAccount);
+                    }
+                }
+            },
+            error: function() {
+                // Handle error if AJAX call fails
+                $('.nav-item1').hide(); // Hide 'nav-item1' in case of an error
+            }
+        });
+    }
+
+    // Fetch accounts on page load
+    $(document).ready(function() {
+        fetchAccounts();
+    });
+
+</script>
+<!-- JavaScript for showing and hiding the loader -->
+<script>
+    // Function to show the loader
+    function showLoader() {
+        document.getElementById('loader').style.visibility = 'visible';
+    }
+
+    // Function to hide the loader
+    function hideLoader() {
+        document.getElementById('loader').style.visibility = 'hidden';
+    }
+
+    // // Event listener to show the loader on form submission
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     // Example: Show the loader when a form is submitted
+    //     document.querySelector('form').addEventListener('submit', function () {
+    //         showLoader();
+    //     });
+
+        // Simulate a delay to hide the loader (after data processing)
+        setTimeout(function () {
+            hideLoader();
+        }, 2000);  // Example: hide after 2 seconds (adjust as needed)
+    // });
+</script>
+<script>
+    let logoutTimer;
+    const idleTimeout = 10 * 60 * 1000; // 10 minutes
+
+    // Function to log out the user
+    function logoutUser() {
+        // Notify other tabs about logout
+        localStorage.setItem('logout-event', Date.now());
+        // Redirect to logout URL (this will also destroy the session on the server)
+        window.location.href = "{{ url_for('main.logout') }}";
+    }
+
+    // Reset the inactivity timer
+    function resetTimer() {
+        clearTimeout(logoutTimer);
+        logoutTimer = setTimeout(logoutUser, idleTimeout);  // Start the timer for 10 minutes
+    }
+
+    // Event listeners for user activity
+    document.addEventListener('mousemove', resetTimer);
+    document.addEventListener('keypress', resetTimer);
+    document.addEventListener('click', resetTimer);
+    document.addEventListener('scroll', resetTimer);
+
+    // Listen to 'storage' event to detect logout from other tabs
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'logout-event') {
+            // Logout if another tab triggered a logout
+            window.location.href = "{{ url_for('main.logout') }}";
+        }
+    });
+
+    // Initialize the timer when the page loads
+    resetTimer();
+</script>
+<script>
+    // Add event listener to header menu links
+    $(document).ready(function () {
+        // Add click event to all header menu links
+        $('.navbar-nav .nav-link').on('click', function () {
+            showLoader(); // Show loader on menu click
+        });
+
+        // Fetch accounts when the page loads
+        fetchAccounts();
+    });
+
+    // // Event listener to show the loader on form submission
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     // Example: Show the loader when a form is submitted
+    //     const form = document.querySelector('form');
+    //     if (form) {
+    //         form.addEventListener('submit', function () {
+    //             showLoader();
+    //         });
+    //     }
+    // });
+
+    // Show loader on page navigation, except for browser back/forward button
+    // window.onbeforeunload = function (event) {
+    //     // Check if navigation is due to browser's back/forward button
+    //     if (!event.persisted) {
+    //         showLoader();
+    //     }
+    // };
+
+    // Hide loader after the page is fully loaded
+    window.onload = function () {
+        hideLoader();
+    };
+
+    // Listen for the browser's back/forward button navigation and hide loader
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) { // Detect if the page was restored from cache
+            hideLoader();
+        }
+    });
+</script>
+
+
+</body>
+
+</html>

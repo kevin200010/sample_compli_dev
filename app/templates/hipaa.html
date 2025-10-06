@@ -1,0 +1,183 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <h1 class="text-white">HIPAA Compliance Check Report</h1>
+    <p class="text-white">An overview of your AWS environment's compliance with HIPAA regulations</p>
+    <a href="{{ url_for('account.generate_report') }}" id="download" class="btn btn-dark">Download Detailed PDF Report</a>
+    <h3 class="mt-4">Table of Contents</h3>
+    <ul>
+        {% for section in report.keys() %}
+            <li>{{ section }}</li>
+        {% endfor %}
+    </ul>
+    <hr>
+    <h3>Compliance Details</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Status</th>
+                    <th>Explanation</th>
+                    <th>Remediation Steps</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for section, items in report.items() %}
+                <tr>
+                    <td style="word-wrap: break-word; white-space: normal;">{{ section }}</td>
+                    <td style="word-wrap: break-word; white-space: normal;">{{ "Compliant" if items else "Non-Compliant" }}</td>
+                    <td style="word-wrap: break-word; white-space: normal;">{{ get_section_explanation(section) }}</td>
+                    <td style="word-wrap: break-word; white-space: normal;">{{ get_remediation_steps(section) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+<!--<div class="accordion-1">-->
+<!--  <div class="container">-->
+<!--    <div class="row my-5">-->
+<!--      <div class="col-md-6 mx-auto text-center">-->
+<!--        <h2>Frequently Asked Questions</h2>-->
+<!--        <p>A lot of people don’t appreciate the moment until it’s passed. I'm not trying my hardest, and I'm not trying to do</p>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div class="row">-->
+<!--      <div class="col-md-10 mx-auto">-->
+<!--        <div class="accordion" id="accordionRental">-->
+<!--          <div class="accordion-item mb-3">-->
+<!--            <h5 class="accordion-header" id="headingOne">-->
+<!--              <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">-->
+<!--                How do I order?-->
+<!--                <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--              </button>-->
+<!--            </h5>-->
+<!--            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionRental">-->
+<!--              <div class="accordion-body text-sm opacity-8">-->
+<!--                We’re not always in the position that we want to be at. We’re constantly growing. We’re constantly making mistakes. We’re constantly trying to express ourselves and actualize our dreams. If you have the opportunity to play this game of life, you need to appreciate every moment. A lot of people don’t appreciate the moment until it’s passed.-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="accordion-item mb-3">-->
+<!--            <h5 class="accordion-header" id="headingTwo">-->
+<!--              <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">-->
+<!--                How can I make the payment?-->
+<!--                <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--              </button>-->
+<!--            </h5>-->
+<!--            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionRental">-->
+<!--              <div class="accordion-body text-sm opacity-8">-->
+<!--                It really matters and then like it really doesn’t matter. What matters is the people who are sparked by it. And the people who are like offended by it, it doesn’t matter. Because it's about motivating the doers. Because I’m here to follow my dreams and inspire other people to follow their dreams, too.-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="accordion-item mb-3">-->
+<!--            <h5 class="accordion-header" id="headingThree">-->
+<!--              <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">-->
+<!--                How much time does it take to receive the order?-->
+<!--                <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--              </button>-->
+<!--            </h5>-->
+<!--            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionRental">-->
+<!--              <div class="accordion-body text-sm opacity-8">-->
+<!--                The time is now for it to be okay to be great. People in this world shun people for being great. For being a bright color. For standing out. But the time is now to be okay to be the greatest you.-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="accordion-item mb-3">-->
+<!--            <h5 class="accordion-header" id="headingFour">-->
+<!--              <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">-->
+<!--                Can I resell the products?-->
+<!--                <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--              </button>-->
+<!--            </h5>-->
+<!--            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionRental">-->
+<!--              <div class="accordion-body text-sm opacity-8">-->
+<!--                I always felt like I could do anything. That’s the main thing people are controlled by! Thoughts- their perception of themselves! They're slowed down by their perception of themselves.-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="accordion-item mb-3">-->
+<!--            <h5 class="accordion-header" id="headingFifth">-->
+<!--              <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFifth" aria-expanded="false" aria-controls="collapseFifth">-->
+<!--                Where do I find the shipping details?-->
+<!--                <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--              </button>-->
+<!--            </h5>-->
+<!--            <div id="collapseFifth" class="accordion-collapse collapse" aria-labelledby="headingFifth" data-bs-parent="#accordionRental">-->
+<!--              <div class="accordion-body text-sm opacity-8">-->
+<!--                There’s nothing I really wanted to do in life that I wasn’t able to get good at. That’s my skill. I’m not really specifically talented at anything except for the ability to learn.-->
+
+<!--                &lt;!&ndash; Nested Accordion &ndash;&gt;-->
+<!--                <div class="accordion mt-3" id="nestedAccordion">-->
+<!--                  <div class="accordion-item mb-3">-->
+<!--                    <h5 class="accordion-header" id="nestedHeadingOne">-->
+<!--                      <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#nestedCollapseOne" aria-expanded="false" aria-controls="nestedCollapseOne">-->
+<!--                        What are the shipping options available?-->
+<!--                        <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                        <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--                      </button>-->
+<!--                    </h5>-->
+<!--                    <div id="nestedCollapseOne" class="accordion-collapse collapse" aria-labelledby="nestedHeadingOne" data-bs-parent="#nestedAccordion">-->
+<!--                      <div class="accordion-body text-sm opacity-8">-->
+<!--                        We offer various shipping options including standard shipping, express shipping, and overnight delivery. Choose the one that fits your needs!-->
+<!--                      </div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+
+<!--                  <div class="accordion-item mb-3">-->
+<!--                    <h5 class="accordion-header" id="nestedHeadingTwo">-->
+<!--                      <button class="accordion-button border-bottom font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#nestedCollapseTwo" aria-expanded="false" aria-controls="nestedCollapseTwo">-->
+<!--                        How can I track my shipment?-->
+<!--                        <i class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3" aria-hidden="true"></i>-->
+<!--                        <i class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3" style="display:none;" aria-hidden="true"></i>-->
+<!--                      </button>-->
+<!--                    </h5>-->
+<!--                    <div id="nestedCollapseTwo" class="accordion-collapse collapse" aria-labelledby="nestedHeadingTwo" data-bs-parent="#nestedAccordion">-->
+<!--                      <div class="accordion-body text-sm opacity-8">-->
+<!--                        You can track your shipment using the tracking number provided in your order confirmation email. Visit our website and enter the tracking number to see the status.-->
+<!--                      </div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--                &lt;!&ndash; End of Nested Accordion &ndash;&gt;-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--  // JavaScript to toggle icons for both accordions-->
+<!--  const accordionButtons = document.querySelectorAll('.accordion-button');-->
+<!--  accordionButtons.forEach(button => {-->
+<!--    button.addEventListener('click', () => {-->
+<!--      const plusIcon = button.querySelector('.collapse-icon');-->
+<!--      const minusIcon = button.querySelector('.collapse-open-icon');-->
+<!--      plusIcon.style.display = plusIcon.style.display === 'none' ? 'inline' : 'none';-->
+<!--      minusIcon.style.display = minusIcon.style.display === 'none' ? 'inline' : 'none';-->
+<!--    });-->
+<!--  });-->
+<!--</script>-->
+<!-- <script>
+ //   document.querySelector('#download').addEventListener('click', function () {
+ //   showLoader();
+
+    // Assume the file will download in 5 seconds
+   // setTimeout(() => {
+     //   hideLoader();
+   // }, 8000); // Adjust this time based on your average download duration
+//});
+</script> -->
+{% endblock %}

@@ -1,0 +1,56 @@
+.navbar {
+    justify-content: space-between;
+    padding: 2px 5px; /* Adjust padding values as needed */
+    margin-bottom: 0; /* Remove bottom margin */
+}
+.navbar .logo {
+    margin-left: 5%; /* Add padding to the left */
+}
+
+.navbar-brand.setting img {
+    transition: transform 0.3s ease-in-out; /* Add a smooth transition */
+}
+  
+.navbar-brand.setting:hover img {
+    transform: rotate(360deg); /* Rotate 360 degrees on hover */
+}
+
+.navbar .signout {
+    margin-right: 25px; /* Add padding to the right */
+}
+
+.nav-link {
+    color: white !important; /* Use !important to override other styles */
+    position: relative;
+    text-decoration: none;
+}
+
+
+.nav-link:hover, .nav-link:visited {
+    color: white !important; /* Ensure the color stays white on hover and visited */
+}
+
+.nav-link:active {
+    color: #396bcf !important; /* Active state color */
+}
+
+.navbar-expand-lg{
+    background-color: rgba(0, 0, 0, 0.5); 
+    backdrop-filter: blur(10px); 
+}
+.fab {
+    color: white;
+}
+.fa-instagram, .fa-facebook-f, .fa-linkedin{
+    color: white;
+    transition: all 0.5s;
+}
+.fa-instagram:hover{
+    transition: all 0.5s;
+    color: #cf39aa;
+}
+
+.fa-facebook-f:hover, .fa-linkedin:hover{
+    transition: all 0.5s;
+    color: #397fcf;
+}

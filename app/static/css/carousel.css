@@ -1,0 +1,31 @@
+.carousel-item {
+    height: 700px; /* Adjust as needed */
+    position: relative;
+    border: 2px solid black;
+}
+.carousel-item img {
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+}
+.carousel-caption {
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 20px; /* Adjust padding if needed */
+    color: white;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: left;
+    height: 150px; /* Adjust as needed */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.carousel-caption h3 {
+    font-size: 1.5rem; /* Adjust font size if needed */
+    margin-bottom: 10px;
+}
+.carousel-caption p {
+    font-size: 0.875rem; /* Adjust font size if needed */
+}

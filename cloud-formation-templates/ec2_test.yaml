@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Minimal EC2 launch in existing VPC/subnet/SG with custom UserData
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: security-tool
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+
+  ElasticIPAllocationId:                # <-- Add this parameter
+    Type: String
+    Description: Allocation ID of an existing Elastic IP to associate with the EC2 instance
+
+Resources:
+  MinimalInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - complitru-dev-role
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: MinimalEC2Instance
+    Properties:
+      Handle: !Ref WaitHandle
+      Timeout: 1800  # 30 minutes, adjust as needed
+
+  MinimalNetworkInterface:  # <-- Add this resource
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId: subnet-0e8f49836a7ed84dc
+      GroupSet:
+        - sg-0158442f884a5858b
+      # AssociatePublicIpAddress: false   # <-- REMOVE this line
+
+  MinimalEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0df8c184d5f6ae949
+      InstanceType: t2.medium
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref MinimalInstanceProfile
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref MinimalNetworkInterface
+          DeviceIndex: 0
+      UserData: 
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            #set -e
+
+            #!/bin/bash
+
+            # Re-execute the script as root if not already running as root
+            if [ "$EUID" -ne 0 ]; then
+              echo "🔵 Script not running as root. Re-executing with sudo..."
+              exec sudo bash "$0" "$@"
+            fi
+
+            cd /home/ec2-user/
+
+            echo "🔵 Updating system packages..."
+            dnf update -y
+
+            echo "🔵 Installing curl..."
+            dnf install -y curl
+
+            echo "🔵 Installing required development tools for Python 3.11..."
+            dnf groupinstall -y "Development Tools"
+            dnf install -y gcc openssl-devel bzip2-devel libffi-devel wget make mariadb105 unzip sed
+
+            # Check if Python 3.11 is already installed
+            if ! command -v python3.11 >/dev/null 2>&1; then
+              echo "🔵 Python 3.11 not found. Installing Python 3.11..."
+              cd /usr/src
+              wget https://www.python.org/ftp/python/3.11.8/Python-3.11.8.tgz
+              echo "🔵 Extracting Python 3.11 archive..."
+              tar xzf Python-3.11.8.tgz
+              cd Python-3.11.8
+              echo "🔵 Building and installing Python 3.11..."
+              ./configure --enable-optimizations
+              make -j$(nproc)
+              make altinstall  # Avoid overwriting system Python
+            else
+              echo "✅ Python 3.11 already installed: $(python3.11 --version)"
+            fi
+
+            echo "✅ Python version installed: $(python3.11 --version)"
+
+            mkdir -p /root/.aws
+            touch /root/.aws/credentials
+
+            echo "🔵 Unzipping application..."
+            aws s3 cp s3://gms-eagle-insights-bucket/GMS-AI-sarva-dev-gms.zip /home/ec2-user/
+            cd /home/ec2-user/
+            if [ -f GMS-AI-sarva-dev-gms.zip ]; then
+              unzip -o GMS-AI-sarva-dev-gms.zip
+              mv GMS-AI-sarva-dev GMS-AI
+              cd GMS-AI
+            else
+              echo "❌ Application zip not found, aborting."
+              # Notify WaitCondition of failure
+              WAIT_CONDITION_URL='${WaitHandle}'
+              curl -X PUT -H 'Content-Type:' \
+                --data-binary '{"Status": "FAILURE", "Reason": "App zip not found", "UniqueId": "AppZip", "Data": "Failed"}' \
+                "$WAIT_CONDITION_URL"
+              exit 1
+            fi
+
+            echo "🔵 Installing Python dependencies..."
+            python3.11 -m pip install --upgrade pip
+            if [ -f requirements.txt ]; then
+              python3.11 -m pip install -r requirements.txt
+            else
+              echo "❌ requirements.txt not found, aborting."
+              WAIT_CONDITION_URL='${WaitHandle}'
+              curl -X PUT -H 'Content-Type:' \
+                --data-binary '{"Status": "FAILURE", "Reason": "requirements.txt not found", "UniqueId": "Requirements", "Data": "Failed"}' \
+                "$WAIT_CONDITION_URL"
+              exit 1
+            fi
+
+            echo "🔵 Checking for processes on port 1100..."
+            PORT=1100
+            PID=$(lsof -ti:$PORT)
+            if [ -n "$PID" ]; then
+              echo "Killing process running on port $PORT (PID: $PID)"
+              kill -9 $PID
+            else
+              echo "No process running on port $PORT"
+            fi
+
+            echo "🔵 Starting the application in background..."
+            nohup python3.11 run.py --host 0.0.0.0 --port 1100 &
+
+            echo "✅ Application deployed and running on port 1100!"
+
+            # Notify WaitCondition of success
+            WAIT_CONDITION_URL='${WaitHandle}'
+            curl -X PUT -H 'Content-Type:' \
+              --data-binary '{"Status": "SUCCESS", "Reason": "App deployed", "UniqueId": "AppDeploy", "Data": "All good"}' \
+              "$WAIT_CONDITION_URL"
+
+  MinimalEIPAssociation:                # <-- Add this resource
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !Ref ElasticIPAllocationId
+      NetworkInterfaceId: !Ref MinimalNetworkInterface
+
+Outputs:
+  InstanceId:
+    Description: The Instance ID
+    Value: !Ref MinimalEC2Instance

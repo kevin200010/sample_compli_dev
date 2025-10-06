@@ -1,0 +1,240 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    .cards-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap; /* Allow cards to wrap on smaller screens */
+      gap: 35px;
+      margin: 50px auto;
+      background: rgba(255, 255, 255, 0);
+      max-width: 100%;
+    }
+
+    .card-wrap {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 240px; /* Set max width for cards */
+      height: 240px;
+      position: relative;
+      background: rgba(255, 255, 255, 0);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-wrap:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+     .card-wrap.selected {
+      box-shadow: 0 0 0 4px #007bff;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.2s ease;
+      background: rgba(255, 255, 255, 0);
+    }
+
+/*     .card-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+          border-radius: 12px;
+          background-color: rgba(255, 255, 255, 0);
+    } */
+    .provider-logo {
+      max-width: 70px;
+      max-height: 70px;
+      object-fit: contain;
+    }
+
+    .card-info {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      height: 100%;
+      text-align:center;
+    }
+
+    /* Coming Soon modal styling */
+    #comingSoonModal .modal-content {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .cards-container {
+        gap: 35px; /* Reduce spacing between cards */
+        margin: auto;
+      }
+
+      .card-wrap {
+        height: 240px; /* Adjust height for smaller screens */
+      }
+
+      .card-info {
+        padding: 15px; /* Reduce padding in card info */
+      }
+
+      .card-info h1 {
+        font-size: 1.5rem; /* Adjust font size for headers */
+      }
+
+      .card-info p {
+        font-size: 1rem; /* Adjust font size for content */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-wrap {
+        height: 200px; /* Further adjust card height for mobile */
+      }
+
+      .card-info h1 {
+        font-size: 1.2rem; /* Adjust font size for mobile headers */
+      }
+
+      .card-info p {
+        font-size: 0.9rem; /* Adjust font size for mobile content */
+      }
+    }
+</style>
+
+<div class="cards-container" id="cards-container">
+    <!-- Cards will be generated here -->
+</div>
+
+<!-- Coming Soon Modal -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1" aria-labelledby="comingSoonLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <strong>Coming Soon</strong>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const cardsContainer = document.getElementById("cards-container");
+      const comingSoonModal = new bootstrap.Modal(document.getElementById('comingSoonModal'));
+
+      // Card Data: Background images and content
+      const cardsData = [
+        { image: "{{ url_for('static', filename='images/aws-color.png') }}", header: "AWS", content: "" },
+        { image: "{{ url_for('static', filename='images/azure-color.png') }}", header: "Azure", content: "" },
+        { image: "{{ url_for('static', filename='images/Google-color.png') }}", header: "GCP", content: "" },
+        { image: "{{ url_for('static', filename='images/Oracle-color.png') }}", header: "Oracle", content: "" },
+      ];
+
+      // Create cards dynamically
+      cardsData.forEach((data, index) => {
+        const cardWrap = document.createElement("div");
+        cardWrap.className = "card-wrap";
+        cardWrap.setAttribute("id", `card-wrap-${index}`);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.setAttribute("id", `card-${index}`);
+
+        // const cardBg = document.createElement("div");
+        // cardBg.className = "card-bg";
+        // cardBg.setAttribute("id", `card-bg-${index}`);
+        // cardBg.style.backgroundImage = `url(${data.image})`;
+
+        const cardInfo = document.createElement("div");
+        cardInfo.className = "card-info";
+
+        const providerLogo = document.createElement("img");
+        providerLogo.className = "provider-logo";
+        providerLogo.setAttribute("id", `provider-logo-${index}`);
+        providerLogo.src = data.image;
+
+
+        const cardHeader = document.createElement("h1");
+        cardHeader.textContent = data.header;
+
+        const cardContent = document.createElement("p");
+        cardContent.textContent = data.content;
+
+        // Append elements
+        cardInfo.appendChild(providerLogo);
+        cardInfo.appendChild(cardHeader);
+        cardInfo.appendChild(cardContent);
+        //card.appendChild(cardBg);
+        card.appendChild(cardInfo);
+        cardWrap.appendChild(card);
+        cardsContainer.appendChild(cardWrap);
+
+        // Add interactive functionality
+        let mouseLeaveDelay;
+
+        const handleMouseMove = (e) => {
+          const rect = cardWrap.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+          const mouseX = e.clientX - rect.left - width / 2;
+          const mouseY = e.clientY - rect.top - height / 2;
+
+          const mousePX = mouseX / width;
+          const mousePY = mouseY / height;
+
+          const rX = mousePX * 30;
+          const rY = mousePY * -30;
+          const tX = mousePX * -40;
+          const tY = mousePY * -40;
+
+          card.style.transform = `rotateY(${rX}deg) rotateX(${rY}deg)`;
+          //cardBg.style.transform = `translateX(${tX}px) translateY(${tY}px)`;
+        };
+
+        const handleMouseEnter = () => {
+          clearTimeout(mouseLeaveDelay);
+        };
+
+        const handleMouseLeave = () => {
+          mouseLeaveDelay = setTimeout(() => {
+            card.style.transform = "rotateY(0deg) rotateX(0deg)";
+            //cardBg.style.transform = "translateX(0px) translateY(0px)";
+            providerLogo.style.transform = "translateX(0px) translateY(0px)";
+          }, 1000);
+        };
+
+        cardWrap.addEventListener("mousemove", handleMouseMove);
+        cardWrap.addEventListener("mouseenter", handleMouseEnter);
+        cardWrap.addEventListener("mouseleave", handleMouseLeave);
+        cardWrap.addEventListener('click', () => {
+          document.querySelectorAll('.card-wrap').forEach(c => c.classList.remove('selected'));
+          cardWrap.classList.add('selected');
+          if (data.header === 'AWS') {
+            window.location.href = "{{ url_for('account.select_account') }}";
+          } else {
+            comingSoonModal.show();
+          }
+        });
+      });
+    });
+</script>
+
+{% endblock %}

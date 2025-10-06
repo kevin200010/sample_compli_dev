@@ -1,0 +1,83 @@
+.button {
+    background-color: #396bcf;
+    color: #fff;
+    border: #fff 0.15em solid;
+    border-radius: 10px;
+    transition: all 0.6s ease;
+}
+
+.button:hover {
+    background-color: #dd890b;
+    cursor: pointer;
+    transition: all 0.6s ease;
+
+}
+.button:active {
+    letter-spacing: 3px;
+    background-color: #396bcf;
+    color: hsl(0, 0%, 100%);
+    transform: translateY(10px);
+    transition: 100ms;
+}
+.Update-Remove-Button {
+    padding: 10px 15px;
+    border-radius: 1px;
+    cursor: pointer;
+    border: 1px solid black;
+    background-color: white;
+    box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    transition: all 0.5s ease;
+  }
+  
+.Update-Remove-Button:hover,.btn-group2:hover {
+    letter-spacing: 3px;
+    background-color: #396bcf;
+    color: hsl(0, 0%, 100%);
+    border: 0;
+    box-shadow: #396bcf 0px 7px 29px 0px;
+    transition: all 0.5s ease;
+
+}
+
+.Update-Remove-Button:active,.btn-group2:active {
+    letter-spacing: 3px;
+    background-color: #cf9b39;
+    color: hsl(0, 0%, 100%);
+    box-shadow: #396bcf 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
+}
+
+.button4 {
+    padding: 10px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    color: black;
+    border: 1px solid black;
+    background-color: white;
+    box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    transition: all 0.5s ease;
+  }
+  
+.button4:hover {
+    letter-spacing: 3px;
+    background-color: #396bcf;
+    color: hsl(0, 0%, 100%);
+    border: 0;
+    box-shadow: #396bcf 0px 7px 29px 0px;
+}
+
+.button4:active {
+    letter-spacing: 3px;
+    background-color: #cf9b39;
+    color: hsl(0, 0%, 100%);
+    box-shadow: #396bcf 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
+}

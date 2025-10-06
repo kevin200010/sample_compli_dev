@@ -1,0 +1,25 @@
+<div class="sidebar">
+    <h1 class="center2 josefin-sans-temp">Services</h1>
+    <form autocomplete="off" id="sidebar-action-form" action="/sidebar_action" method="post">
+        <div>
+            <a class="" style="cursor: pointer;" onclick="selectInfo({{ account }})">
+                <i class="fas fa-circle-info"></i>
+                - Service Information
+            </a>
+            <a class="" style="cursor: pointer;" onclick="selectAccount({{ account }})">
+                <i class="fas fa-lock-open"></i>
+                - Vulnerability Remediation
+            </a>
+            <a class="" style="cursor: pointer;" id="getReportButton" onclick="getReport({{ account }})">
+                <i class="fas fa-file-lines"></i>
+                - PCI Analysis
+            </a>
+            <a class="" style="cursor: pointer;" id="getHipaaReportButton" onclick="getHipaaReport({{ account }})">
+                <i class="fas fa-file-lines"></i>
+                - Hipaa Analysis
+            </a>
+        </div>
+    </form>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">

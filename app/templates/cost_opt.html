@@ -1,0 +1,389 @@
+{% extends 'layout.html' %}
+{% block content %}
+<!-- Highcharts Library -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<style>
+    /* Button styles based on severity levels */
+    .button-severity-critical { background-color: rgb(129, 13, 13); }
+    .button-severity-high { background-color: rgb(242, 69, 69); }
+    .button-severity-medium { background-color: rgb(233, 156, 13); }
+    .button-severity-low { background-color: rgb(238, 255, 87); }
+    .button-severity-informational { background-color: blue; }
+
+    /* Circle styles to indicate severity visually */
+    .severity-circle {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%; /* Makes the circle shape */
+        border: 1px solid black; /* Black border for the circle */
+        margin-right: 10px; /* Space between the circle and text */
+    }
+
+    /* New class for the sub-accordion background color */
+    .sub-accordion-bg {
+        background-color: lightgray; /* Light gray background for sub-accordion */
+        padding: 10px; /* Add some padding for better spacing */
+        border-radius: 5px; /* Optional: round the corners */
+    }
+
+    .gpt-response-container {
+        border: 1px solid #ccc;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        font-family: 'Arial', sans-serif;
+    }
+
+    .gpt-response-container h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .gpt-response-container .response-text {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #333;
+        white-space: pre-wrap; /* Preserve newlines */
+    }
+
+    .gpt-response-container .response-footer {
+        margin-top: 15px;
+        font-size: 0.875rem;
+        color: #777;
+        text-align: right;
+    }
+
+    .alert-success {
+        background-color: #28a745;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .alert-warning {
+        background-color: #ffc107;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .alert-danger {
+        background-color: #dc3545;
+        color: white;
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+    // Pass the selected month from Flask session to JavaScript
+    var sessionSelectedMonth = "{{ session.get('selected_month', '') }}";
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dropdown = document.getElementById("monthDropdown");
+        const now = new Date();
+        let hasSelected = false;
+
+        for (let i = 0; i < 12; i++) {
+            let date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            let displayText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+            let value = date.getFullYear() + ", " + date.toLocaleString('default', { month: 'short' }) + " 01";
+            let option = new Option(displayText, value);
+
+            // Check if this matches the session's selected month
+            if (value === sessionSelectedMonth) {
+                option.selected = true;
+                hasSelected = true;
+            }
+            dropdown.appendChild(option);
+        }
+
+        // Default to current month if no session value
+        if (!hasSelected && dropdown.options.length > 0) {
+            dropdown.options[0].selected = true;
+        }
+    });
+</script>
+
+<div class="accordion-1">
+    <div class="container">
+        <div class="row my-4">
+            <!--            <div class="col-md-4">-->
+            <!--                <div class="card text-dark shadow">-->
+            <!--                    <div class="card-body">-->
+            <!--                        <h5>Total Cost (Last 30 Days)</h5>-->
+            <!--                        <h2>$ {% if total_cost <= 0 %}0.00{% else %}{{ "%.2f"|format(total_cost) }}{% endif %}</h2>-->
+            <!--                        <p class="mb-0">Billing Period: {{ billing_period }}</p>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
+            <div class="col-md-6">
+                <div class="card text-dark shadow">
+                    <div class="card-body">
+                        <h5>Highest Spent Service</h5>
+                        <h3 class="mb-0">
+                            {{ highest_spent_service }}:
+                            ${% if highest_spent_amount <= 0 %}0.00{% else %}{{ "%.2f"|format(highest_spent_amount) }}{%
+                            endif %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-dark shadow">
+                    <div class="card-body">
+                        <h5>Current Month Total Cost</h5>
+                        <h2>$ {% if current_month_cost <= 0 %}0.00{% else %}{{ "%.2f"|format(current_month_cost) }}{%
+                            endif %}</h2>
+                        <p class="mb-0">Billing Period: {{ current_period }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row my-4">
+            <div class="col-md-10 mx-auto d-flex justify-content-between">
+                <h2 class="mb-0 text-dark">AWS Cost Details</h2>
+                <div class="d-flex">
+                    <form action="" class="me-3" method="POST" onchange="this.submit()">
+                        <select class="btn bg-gradient-primary" id="monthDropdown" name="selected_month"
+                                required></select>
+                    </form>
+                    <a class="btn btn-primary me-3" href="{{ url_for('account.cost_optimization_csv') }}">Download
+                        CSV</a>
+                    <a class="btn btn-secondary me-3" href="{{ url_for('account.cost_optimization_pdf') }}">Download
+                        PDF</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <div class="accordion" id="accordionBilling">
+                    {% for service, data in service_data.items() %}
+                    {% set service_cost = service_totals[service] %}
+                    <div class="accordion-item mb-3">
+                        <h5 class="accordion-header" id="heading-{{ loop.index }}">
+                            <button aria-controls="collapse-{{ loop.index }}"
+                                    aria-expanded="false"
+                                    class="accordion-button border-bottom font-weight-bold"
+                                    data-bs-target="#collapse-{{ loop.index }}"
+                                    data-bs-toggle="collapse"
+                                    onclick="toggleIcons(this)"
+                                    type="button">
+                                <span class="text-primary">
+                                    {{ service }} - Total Cost:
+                                    ${% if service_cost <= 0 %}0.00{% else %}{{ "%.2f"|format(service_cost) }}{% endif %}
+                                </span>
+                                <i aria-hidden="true"
+                                   class="collapse-icon fa fa-plus text-xs pt-1 position-absolute end-0 me-3"></i>
+                                <i aria-hidden="true"
+                                   class="collapse-open-icon fa fa-minus text-xs pt-1 position-absolute end-0 me-3"
+                                   style="display:none;"></i>
+                            </button>
+                        </h5>
+                        <div aria-labelledby="heading-{{ loop.index }}"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#accordionBilling"
+                             id="collapse-{{ loop.index }}">
+                            <div class="accordion-body text-sm opacity-8">
+                                <table class="table table-bordered ">
+                                    <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Cost (USD)</th>
+                                        <th>Usage Quantity</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for date, cost, usage in data.dates | zip(data.costs, data.usage_quantities) %}
+                                    <tr>
+                                        <td>{{ date }}</td>
+                                        <td>${{ "%.2f"|format(cost if cost > 0 else 0) }}</td>
+                                        <td>{{ "%.2f"|format(usage if usage > 0 else 0) }}</td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    </tbody>
+                                </table>
+                                <!-- Button to fetch recommendations for this service -->
+                                <button class="btn btn-primary fetch-recommendations"
+                                        data-service-cost="{{ service_totals[service] | round(2) }}"
+                                        data-service-name="{{ service }}"
+                                        data-service-usage="{{ data.usage_quantities }}"
+                                        data-usage-dates="{{ data.dates}}">
+                                    Get Recommendations
+                                </button>
+                                <div class="recommendations-output mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <p class="text-danger">No billing data available for the selected period.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal that displays the GPT remediation recommendation output -->
+<div class="modal slide-in-bottom" id="gptResultModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header center2">
+                <h4 class="modal-title">Your Insight</h4>
+                <!-- View AWS CLI Commands button in the modal header -->
+                <!-- Close button -->
+                <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <div id="jsonContent"></div>
+            </div>
+            <div class="modal-footer">
+                <!-- <a id="viewCommandsBtn" href="#" class="btn button4 btn-primary">View AWS CLI Commands</a> -->
+                <button class="btn mb-0 bg-gradient-primary button4" id="viewCommandsBtn">View AWS CLI Commands</button>
+                <button class="btn mb-0 button4 btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal to have only the Commands to execute -->
+<div class="modal fade slide-in-bottom" id="commandsModal">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header center2">
+                <h4 class="modal-title">AWS CLI Commands</h4>
+                <button aria-label="Close" class="text-dark btn-close" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commandsModalContent">
+                    <form id="commandsForm">
+                        {% for command in aws_cli_commands %}
+                        <div class="form-group">
+                            <input class="form-control" name="command" type="text" value="{{ command }}">
+                            <button class="btn bg-gradient-primary execute" type="button">Execute</button>
+                        </div>
+                        {% endfor %}
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn mb-0 button4 btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to toggle icons
+    function toggleIcons(button, isOpen) {
+        const collapseIcon = button.querySelector('.collapse-icon');
+        const collapseOpenIcon = button.querySelector('.collapse-open-icon');
+
+        if (isOpen) {
+            collapseIcon.style.display = 'none'; // Hide plus icon
+            collapseOpenIcon.style.display = 'inline'; // Show minus icon
+        } else {
+            collapseIcon.style.display = 'inline'; // Show plus icon
+            collapseOpenIcon.style.display = 'none'; // Hide minus icon
+        }
+    }
+
+    // Add event listeners to the accordion buttons
+    document.addEventListener('DOMContentLoaded', function () {
+        const accordions = document.querySelectorAll('.accordion-button');
+
+        accordions.forEach((button) => {
+            const targetId = button.getAttribute('data-bs-target');
+
+            // Event listener for showing the accordion
+            document.querySelector(targetId).addEventListener('shown.bs.collapse', function () {
+                toggleIcons(button, true); // Show minus icon when opened
+            });
+
+            // Event listener for hiding the accordion
+            document.querySelector(targetId).addEventListener('hidden.bs.collapse', function () {
+                toggleIcons(button, false); // Show plus icon when closed
+            });
+
+            // Manual toggle when the button is clicked
+            button.addEventListener('click', function () {
+                const isOpen = button.getAttribute('aria-expanded') === 'true'; // Check current state
+                toggleIcons(button, !isOpen); // Toggle icons based on current state
+            });
+        });
+    });
+</script>
+
+<!-- jQuery Script for Fetching and Displaying GPT Recommendations -->
+<script>
+    $(document).ready(function () {
+        $(".fetch-recommendations").on("click", function () {
+            var button = $(this);
+
+            // Extract data from the button's data attributes
+            var serviceName = button.data("service-name");
+            var serviceCost = button.data("service-cost");
+            var serviceUsage = button.data("service-usage");
+            var usageDates = button.data("usage-dates");
+
+            // Prepare the data payload
+            var requestData = {
+                month_start: "2024-12-01", // Example: Pass the appropriate start date dynamically
+                month_end: "2024-12-31",   // Example: Pass the appropriate end date dynamically
+                services_data: [
+                    {
+                        service_name: serviceName,
+                        service_cost: serviceCost,
+                        service_usage: serviceUsage,
+                        usage_dates: usageDates,
+                    }
+                ]
+            };
+
+            // Clear any previous recommendations
+            var recommendationsOutput = button.closest(".accordion-item").find(".recommendations-output");
+            recommendationsOutput.html("<p>Loading recommendations...</p>");
+
+            // Make the API call
+            $.ajax({
+                url: "/api/get_monthly_recommendations", // API endpoint
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    if (response.success) {
+                        var formattedText = response.recommendations.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+                        recommendationsOutput.html(
+                            `<div class="gpt-response-container">
+                                <h4>Recommendation for Service: ${serviceName}</h4>
+                                <div class="response-text">${formattedText}</div>
+                            </div>`
+                        );
+                    } else {
+                        recommendationsOutput.html(
+                            `<div class="alert alert-warning">No recommendations available.</div>`
+                        );
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching recommendations:", error);
+                    recommendationsOutput.html(
+                        `<div class="alert alert-danger">Failed to fetch recommendations.</div>`
+                    );
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

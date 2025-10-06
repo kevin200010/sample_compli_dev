@@ -1,0 +1,520 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account_help.css') }}">
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <h6>AWS Accounts</h6>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="info">
+                        <i class="fa fa-info-circle"></i>
+                        <span class="extra-info">Add AWS accounts to run compliance checks and track their progress.</span>
+                    </div>
+                    <a class="btn btn-sm mb-0 btn-primary"
+                       href="{{ url_for('account.add_account') }}"><i class="fa fa-plus text-white me-1"></i> Add
+                        Account</a>
+                </div>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                        <tr>
+                            <th>Alias</th>
+                            <th>Access Key</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Date</th>
+                            <th class="text-center">Action</th>
+                            <th class="text-center">Run Check</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for account in user_aws_accounts %}
+                        <tr id="row-{{ account.id }}">
+                            <td>
+                                <div class="d-flex px-2 py-1">
+                                    <img alt="AWS Icon" class="avatar me-3"
+                                         src="{{ url_for('static', filename='images/aws.png') }}">
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <h6 class="mb-0 text-sm">{{ account.alias }}</h6>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <p class="text-xs font-weight-bold mb-0">{{ account.access_key_id }}</p>
+                                <p class="text-xs text-secondary mb-0">{{ account.default_region_name }}</p>
+                            </td>
+                            <td class="align-middle text-center">
+                                {% if account.aws_prowler_check %}
+                                {% if account.aws_prowler_check == 'failed' %}
+                                <span class="badge badge-sm bg-danger">{{account.aws_prowler_check}}</span>
+                                {% else %}
+                                <span class="badge badge-sm bg-success">{{account.aws_prowler_check}}</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge badge-sm bg-info">Not Active</span>
+                                {% endif %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <span class="text-secondary text-xs font-weight-bold">{{ account.date_created.strftime("%a %d %b, %Y") }}</span>
+                            </td>
+                            <td class="align-middle text-center">
+                                <a class="text-primary font-weight-bold text-xs" href="javascript:;" data-account-id="{{ account.id }}" onclick="openEditModal({{ account.id }})">
+                                    <i class="fa fa-pen"></i>
+                                </a>&nbsp;|&nbsp;
+                                <a class="text-danger font-weight-bold text-xs"
+                                   href="{{ url_for('account.delete_account', acc_id=account.id) }}">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                            <td class="align-middle text-center">
+                                <div id="progress-wrapper-{{ account.id }}" style="display: none;">
+                                    <div class="progress mb-2" id="progress-container-{{ account.id }}"
+                                         style="height: 8px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                             id="progress-bar-{{ account.id }}"
+                                             role="progressbar" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="text-xs text-secondary" id="progress-text-{{ account.id }}">0%</span>
+                                </div>
+
+                                <button class="btn btn-sm btn-info" id="start-btn-{{ account.id }}"
+                                        onclick="startCheck({{ account.id }})">
+                                    <i class="fa fa-play"></i> Run Check
+                                </button>
+                                <button class="btn btn-sm btn-danger ms-2" id="stop-btn-{{ account.id }}"
+                                        style="display: none;" type="button"
+                                        onclick="stopCheck({{ account.id }})">
+                                    <i class="fa fa-stop"></i>
+                                </button>
+
+                                <!-- Container to hold presigned download URLs -->
+                                <div id="download-links-{{ account.id }}" class="mt-2"></div>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Account Modal -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="editAccountForm" method="POST" action="{{ url_for('account.update_account') }}">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Account</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="account_id" id="edit-account-id">
+        <div class="mb-3">
+          <label for="edit-alias" class="form-label">Alias</label>
+          <input type="text" class="form-control" id="edit-alias" name="alias">
+        </div>
+        <div class="mb-3">
+          <label for="edit-region" class="form-label">Region</label>
+          <input type="text" class="form-control" id="edit-region" name="default_region_name">
+        </div>
+        <div class="mb-3">
+          <label for="edit-access-key" class="form-label">Access Key</label>
+          <input type="text" class="form-control" id="edit-access-key" name="access_key_id">
+        </div>
+        <div class="mb-3">
+          <label for="edit-secret-key" class="form-label">Secret Key</label>
+          <input type="password" class="form-control" id="edit-secret-key" name="secret_access_key" placeholder="********">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    let isProcessRunning = false;
+    let pollTimer = null; // holds active polling timer
+    let editModalInstance = null;
+    const ESTIMATED_SCAN_DURATION_MINUTES = 5.25; // Approximate duration so UI approaches completion realistically
+    const PROGRESS_MAX_BEFORE_COMPLETION = 99;
+
+    function openEditModal(accountId) {
+        fetch(`/get_account_details?account_id=${accountId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('edit-account-id').value = accountId;
+                document.getElementById('edit-alias').value = data.alias || '';
+                document.getElementById('edit-region').value = data.default_region_name || '';
+                document.getElementById('edit-access-key').value = data.access_key_id || '';
+                const secretInput = document.getElementById('edit-secret-key');
+                secretInput.value = '';
+                secretInput.placeholder = '••••••••';
+                if (!editModalInstance) {
+                    editModalInstance = new bootstrap.Modal(document.getElementById('editAccountModal'));
+                }
+                editModalInstance.show();
+            })
+            .catch(err => console.error('Failed to load account details:', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const editForm = document.getElementById('editAccountForm');
+        editForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const accountId = document.getElementById('edit-account-id').value;
+            const alias = document.getElementById('edit-alias').value.trim();
+            const region = document.getElementById('edit-region').value.trim();
+            const accessKey = document.getElementById('edit-access-key').value.trim();
+            const secretKey = document.getElementById('edit-secret-key').value.trim();
+
+            if (!alias || !region || !accessKey) {
+                swal('Alias, Region, and Access Key are required', '', 'warning');
+                return;
+            }
+
+            const payload = {
+                alias: alias,
+                default_region_name: region,
+                access_key_id: accessKey
+            };
+            if (secretKey) {
+                payload.secret_access_key = secretKey;
+            }
+
+            fetch(`/update_account/${accountId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
+                .then(({ status, body }) => {
+                    if (status === 200) {
+                        const row = document.getElementById(`row-${accountId}`);
+                        if (row) {
+                            const aliasEl = row.querySelector('h6.mb-0');
+                            if (aliasEl) aliasEl.textContent = alias;
+
+                            const keyCell = row.querySelectorAll('td')[1];
+                            if (keyCell) {
+                                const ps = keyCell.querySelectorAll('p');
+                                if (ps[0]) ps[0].textContent = accessKey;
+                                if (ps[1]) ps[1].textContent = region;
+                            }
+                        }
+                        swal(body.message || 'Account updated successfully', '', 'success');
+                        if (editModalInstance) {
+                            editModalInstance.hide();
+                        }
+                    } else {
+                        swal(body.message || 'Failed to update account', '', 'error');
+                    }
+                })
+                .catch(err => {
+                    swal('Failed to update account', err.message, 'error');
+                });
+        });
+        checkRunningProcess();
+    });
+
+function checkRunningProcess() {
+    fetch("/check_running_process")
+        .then(response => response.json())
+        .then(data => {
+            if (data.running) {
+                isProcessRunning = true;
+                let accountId = data.account_id;
+                let startTime = new Date(data.start_time).getTime();
+
+                document.querySelectorAll("[id^=start-btn-]").forEach(button => button.disabled = true);
+                const startButton = document.getElementById(`start-btn-${accountId}`);
+                const progressWrapper = document.getElementById(`progress-wrapper-${accountId}`);
+                const progressBar = document.getElementById(`progress-bar-${accountId}`);
+                const progressText = document.getElementById(`progress-text-${accountId}`);
+
+                if (progressWrapper) {
+                    progressWrapper.style.display = 'block';
+                }
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+                if (progressText) {
+                    progressText.textContent = '0%';
+                }
+                if (startButton) {
+                    startButton.innerHTML = `<i class=\"fa fa-spinner fa-spin\"></i> Running`;
+                }
+                showStopButton(accountId);
+
+                updateProgress(accountId, startTime);
+            } else if (data.urls) {
+                displayDownloadLinks(data.account_id, data.urls);
+                const btn = document.getElementById(`start-btn-${data.account_id}`);
+                if (btn) {
+                    btn.innerHTML = `<i class=\"fa fa-check\"></i> Completed 100%`;
+                }
+                hideStopButton(data.account_id);
+            }
+        })
+        .catch(error => console.error("Error checking running process:", error));
+}
+
+
+function updateProgress(accountId, startTime) {
+    // ensure any existing timer is cleared
+    if (pollTimer) {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+    }
+
+    const poll = () => {
+        fetch(`/check_running_process?account_id=${accountId}`)
+            .then(res => res.json())
+            .then(data => {
+                const elapsedMinutes = (Date.now() - startTime) / 60000;
+                const estimatedProgress = Math.max((elapsedMinutes / ESTIMATED_SCAN_DURATION_MINUTES) * 100, 0);
+                const runningProgress = Math.min(Math.round(estimatedProgress), PROGRESS_MAX_BEFORE_COMPLETION);
+
+                const btn  = document.getElementById(`start-btn-${accountId}`);
+                const bar  = document.getElementById(`progress-bar-${accountId}`);
+                const text = document.getElementById(`progress-text-${accountId}`);
+                const wrapper = document.getElementById(`progress-wrapper-${accountId}`);
+
+                if (wrapper && data.running) {
+                    wrapper.style.display = 'block';
+                }
+
+                if (bar && text && data.running) {
+                    bar.style.width = `${runningProgress}%`;
+                    text.textContent = `${runningProgress}%`;
+                }
+
+                if (!data.running) {
+                    hideStopButton(accountId);
+                    if (data.status === "failed") {
+                        const errorMsg = data.error || "Compliance check failed.";
+                        if (bar && text) {
+                            bar.style.width = "100%";
+                            text.textContent = "Failed";
+                        }
+                        if (btn) btn.innerHTML = `<i class="fa fa-times"></i> ${errorMsg}`;
+                        swal(errorMsg, "", "error");
+                        pollTimer && clearTimeout(pollTimer);
+                        pollTimer = null;
+                        setTimeout(() => resetUI(accountId), 2000);
+                        return;
+                    } else if (data.status === "cancelled") {
+                        if (bar && text) {
+                            bar.style.width = "0%";
+                            text.textContent = "Cancelled";
+                        }
+                        if (btn) {
+                            btn.innerHTML = `<i class="fa fa-stop"></i> Cancelled`;
+                        }
+                        pollTimer && clearTimeout(pollTimer);
+                        pollTimer = null;
+                        setTimeout(() => resetUI(accountId), 1500);
+                        return;
+                    } else if (data.status === "completed") {
+                        if (bar && text) {
+                            bar.style.width = "100%";
+                            text.textContent = "100%";
+                        }
+                        if (btn) btn.innerHTML = `<i class=\"fa fa-check\"></i> Completed 100%`;
+                        pollTimer && clearTimeout(pollTimer);
+                        pollTimer = null;
+                        if (data.urls) {
+                            displayDownloadLinks(accountId, data.urls);
+                        }
+                        return;
+                    } else if (data.status === "completed_with_findings") {
+                        if (bar && text) {
+                            bar.style.width = "100%";
+                            text.textContent = "100%";
+                        }
+                        if (btn) btn.innerHTML = `<i class=\"fa fa-check\"></i> Completed 100%`;
+                        pollTimer && clearTimeout(pollTimer);
+                        pollTimer = null;
+                        if (data.urls) {
+                            displayDownloadLinks(accountId, data.urls);
+                        }
+                        swal("Scan completed with findings", "", "warning");
+                        return;
+                    } else {
+                        pollTimer && clearTimeout(pollTimer);
+                        pollTimer = null;
+                        setTimeout(() => resetUI(accountId), 2000);
+                        return;
+                    }
+                } else if (btn) {
+                    btn.innerHTML = `<i class=\"fa fa-spinner fa-spin\"></i> Running ${runningProgress}%`;
+                }
+
+                // schedule next poll 1-2s later
+                pollTimer = setTimeout(poll, 1000 + Math.random() * 1000);
+            })
+            .catch(err => {
+                console.error("Error updating progress:", err);
+                // retry after delay
+                pollTimer = setTimeout(poll, 1000 + Math.random() * 1000);
+            });
+    };
+
+    poll();
+}
+
+function createLink(href, text) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = text;
+    a.target = '_blank';
+    a.className = 'btn btn-sm btn-outline-primary me-1 mt-1';
+    return a;
+}
+
+function displayDownloadLinks(accountId, urls) {
+    const container = document.getElementById(`download-links-${accountId}`);
+    if (!container) return;
+    container.innerHTML = '';
+    Object.entries(urls).forEach(([name, value]) => {
+        if (Array.isArray(value)) {
+            value.forEach((link, idx) => {
+                container.appendChild(createLink(link, `${name} ${idx + 1}`));
+            });
+        } else {
+            container.appendChild(createLink(value, name));
+        }
+    });
+}
+
+function showStopButton(accountId) {
+    const stopButton = document.getElementById(`stop-btn-${accountId}`);
+    if (stopButton) {
+        stopButton.style.display = 'inline-block';
+        stopButton.disabled = false;
+    }
+}
+
+function hideStopButton(accountId) {
+    const stopButton = document.getElementById(`stop-btn-${accountId}`);
+    if (stopButton) {
+        stopButton.style.display = 'none';
+        stopButton.disabled = false;
+    }
+}
+
+function startCheck(accountId) {
+    if (isProcessRunning) {
+        swal("A process is already running. Please wait for it to finish.", "", "warning");
+        return;
+    }
+    isProcessRunning = true;
+
+    document.querySelectorAll("[id^=start-btn-]").forEach(button => button.disabled = true);
+    const startButton = document.getElementById(`start-btn-${accountId}`);
+    const progressWrapper = document.getElementById(`progress-wrapper-${accountId}`);
+    const progressBar = document.getElementById(`progress-bar-${accountId}`);
+    const progressText = document.getElementById(`progress-text-${accountId}`);
+    if (progressWrapper) {
+        progressWrapper.style.display = 'block';
+    }
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
+    if (progressText) {
+        progressText.textContent = '0%';
+    }
+    if (startButton) {
+        startButton.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Running`;
+    }
+    showStopButton(accountId);
+
+    fetch(`/start_checks/${accountId}`, { method: "POST" })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                updateProgress(accountId, Date.now());
+                swal("Compliance check will take a few minutes, please wait.", "", "success");
+            } else {
+                swal(data.message || "Failed to start the check.", "", "error");
+                resetUI(accountId);
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            swal('Failed to start the check.', error.message || '', 'error');
+            resetUI(accountId);
+        });
+}
+
+function resetUI(accountId) {
+    const startButton = document.getElementById(`start-btn-${accountId}`);
+    const progressWrapper = document.getElementById(`progress-wrapper-${accountId}`);
+    const progressBar = document.getElementById(`progress-bar-${accountId}`);
+    const progressText = document.getElementById(`progress-text-${accountId}`);
+    const linksContainer = document.getElementById(`download-links-${accountId}`);
+
+    document.querySelectorAll("[id^=start-btn-]").forEach(button => button.disabled = false);
+    if (startButton) {
+        startButton.innerHTML = `<i class="fa fa-play"></i> Run Check`;
+    }
+    if (progressWrapper) {
+        progressWrapper.style.display = 'none';
+    }
+    if (progressBar) {
+        progressBar.style.width = '0%';
+    }
+    if (progressText) {
+        progressText.textContent = '0%';
+    }
+    if (linksContainer) {
+        linksContainer.innerHTML = '';
+    }
+    hideStopButton(accountId);
+    isProcessRunning = false;
+    if (pollTimer) {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+    }
+}
+
+function stopCheck(accountId) {
+    const stopButton = document.getElementById(`stop-btn-${accountId}`);
+    if (stopButton) {
+        stopButton.disabled = true;
+    }
+
+    fetch(`/stop_checks/${accountId}`, { method: 'POST' })
+        .then(resp => resp.json().then(body => ({ status: resp.status, body })))
+        .then(({ body }) => {
+            if (body.status === 'success') {
+                swal('Scan cancellation requested.', '', 'success');
+            } else if (body.status === 'not_running') {
+                swal('No scan is currently running for this account.', '', 'info');
+            } else {
+                swal(body.message || 'Failed to stop the scan.', '', 'error');
+            }
+            resetUI(accountId);
+        })
+        .catch(err => {
+            console.error('Failed to stop scan:', err);
+            swal('Failed to stop the scan.', err.message || '', 'error');
+            resetUI(accountId);
+        });
+}
+
+document.addEventListener("DOMContentLoaded", () => { checkRunningProcess(); });
+
+
+</script>
+
+{% endblock %}

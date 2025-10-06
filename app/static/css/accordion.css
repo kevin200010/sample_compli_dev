@@ -1,0 +1,116 @@
+.accordion {
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.25rem;
+    /* border: 2px solid black; */
+    transition: background-color 0.3s ease;
+    }
+.accordion-body{
+    text-align: left;  
+    background-color: #1a1919; 
+}
+.accordion-text {
+    display: flex;
+    justify-content: space-between;
+    width: 100%; /* Ensure the button content fills the entire width */
+}
+.accordion-button{
+    transition: all ease-in 0.5s;
+    background-color: black;
+    color: #e0e0e0;
+    font-weight: bolder;
+}
+.accordion-button:hover{
+    transition: all ease-in 0.5s;
+}
+
+.finding-count {
+    text-align: right;
+    flex-grow: 1;
+    margin-right: 20px
+}
+
+.btn-group .dropdown-toggle {
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+
+.btn-severity-low, .btn-severity-high, .btn-severity-medium, .btn-severity-critical  {
+    font-size: 20px;
+    color: black;
+    border: 1px solid rgb(197, 196, 196);
+    padding: 10px;
+    font-weight: normal;
+    transition: all 0.7s ease;
+}
+.btn-severity-low, .btn-severity-high {
+    background-color: rgb(252, 252, 252);
+}
+
+.btn-severity-medium, .btn-severity-critical {
+    background-color: rgb(238, 238, 238);
+}
+
+.btn-severity-low:hover, .btn-severity-medium:hover, .btn-severity-high:hover, .btn-severity-critical:hover {
+    font-weight: bolder;
+    transition: all 0.7s ease;    
+    color: black;
+}
+.btn-severity-low:hover {
+    background-color: rgb(238, 255, 87);
+}
+.btn-severity-medium:hover {
+    background-color: rgb(233, 156, 13);
+}
+.btn-severity-high:hover {
+    background-color: rgb(242, 69, 69);
+}
+.btn-severity-critical:hover {
+    background-color: rgb(129, 13, 13);
+}
+
+.button-severity-critical { background-color: rgb(129, 13, 13); }
+.button-severity-high { background-color: rgb(242, 69, 69); }
+.button-severity-medium { background-color: rgb(233, 156, 13); }
+.button-severity-low { background-color: rgb(238, 255, 87); }
+.button-severity-informational { background-color: blue; }
+
+.severity-circle {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid black; /* Black border */
+    margin-right: 10px;
+}
+
+.btn-group{
+    display: flex;
+    border-radius: 0px;
+    margin-left: 3%;
+    margin-right: 3%;
+}
+
+.btn-group-severity{
+    border-radius: 0px;
+    border: 0;
+    text-align: left;
+    color: black;
+}
+
+.btn-group2{
+    /* display: flex; */
+    border-radius: 0px;
+    border: #1a1a1a 1px solid;
+    width: 10%;
+    background: #3d3d3d;
+}
+.card,.card-body{
+    border: #f4eeee 1px solid;
+    text-align: left;
+}

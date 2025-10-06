@@ -1,0 +1,109 @@
+ol {
+    list-style-type: decimal;
+    padding-left: 20px;
+    color: white;
+    }
+    
+ol li {
+    margin-bottom: 20px;
+    color: white;
+}
+
+ol li p {
+    margin-bottom: 10px;
+    color: white;
+}
+
+ol li strong {
+    font-weight: bold;
+    color: white;
+}
+
+ol li code {
+    display: block;
+    background-color: #333;
+    color: #16bb07;
+    padding: 10px;
+    border: 1px solid #555;
+    font-weight: bold;
+    font-family: var(--mono); /* Use monospace font for code */
+    border-radius: 4px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+}
+
+/* Additional steps styling */
+p strong {
+    font-weight: bold;
+    color: white;
+}
+
+ul {
+    color: white;
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+ul li {
+    color: white;
+    margin-bottom: 10px;
+}
+
+/* Link styling */
+a {
+    color: #007bff; /* Blue color for links */
+    text-decoration: none;
+}
+p1 {
+    color: black;
+}
+:root {
+    --sans: "Soehne", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --serif: "Signifier", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --mono: "Soehne Mono Buch", Courier, monospace;
+}
+p{
+    color: white;
+}
+html, body {
+    height: 100%;
+    font-family: 'Josefin Sans', var(--serif);
+
+}
+
+body {
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    background-image: url('/static/images/chicago.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: 'Josefin Sans', var(--sans);
+
+}
+h1{
+    text-shadow: black 1px 0 10px;
+    transition: 1s all;
+
+}
+h1:hover{
+    letter-spacing: 3px;
+    transform: translateY(10px);
+
+    transition: 1s all;
+}
+h2, div {
+    color: black;
+
+}
+h3{
+    color: white;
+}
+h4{
+    margin-top: 7px;
+    font-size: 20px;
+}
+span{
+    text-align: left;
+}

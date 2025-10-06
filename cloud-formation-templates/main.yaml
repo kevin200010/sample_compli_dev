@@ -1,0 +1,715 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'complitru-ai - AI-driven compliance automation platform for centralized compliance checks, cost assessments, and vulnerability audits across AWS environments.'
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: >
+      The CIDR block for the Virtual Private Cloud (VPC) where all resources will be deployed. Example: 10.0.0.0/16
+
+  PublicSubnet1Cidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: >
+      The CIDR block for the first public subnet in the VPC. Example: 10.0.1.0/24
+
+  PublicSubnet2Cidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: >
+      The CIDR block for the second public subnet in the VPC. Example: 10.0.2.0/24
+
+  PrivateSubnet1Cidr:
+    Type: String
+    Default: 10.0.3.0/24
+    Description: >
+      The CIDR block for the first private subnet in the VPC. Example: 10.0.3.0/24
+
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: 10.0.4.0/24
+    Description: >
+      The CIDR block for the second private subnet in the VPC. Example: 10.0.4.0/24
+
+  GMSAccessKeyId:
+    Type: String
+    Description: >
+      The AWS Access Key ID for the application to use.
+
+  GMSSecretAccessKey:
+    Type: String
+    NoEcho: true
+    Description: >
+      The AWS Secret Access Key for the application to use.
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    Description: >
+      The EC2 instance type to use for application servers. Example: t3.medium
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: >
+      The name of an existing EC2 Key Pair to enable SSH access to the instances. You can create a key pair in the AWS EC2 console.
+
+  DBUsername:
+    Type: String
+    Description: >
+      The master username for the RDS MySQL database. Must be 1–16 alphanumeric characters.
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: >
+      The master password for the RDS MySQL database. Must be 8–41 printable ASCII characters (excluding /, ", and @).
+
+  RdsInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: >
+      The instance type for the RDS MySQL database. Example: db.t3.micro
+
+  AllowedCIDR:
+    Type: String
+    Description: >
+      The CIDR block allowed to access the application and database. Use x.x.x.x/32 to allow a specific IP, or 0.0.0.0/0 to allow all IPs (not recommended for production).
+
+  ACMCertificateArn:
+    Type: String
+    Description: >
+      The ARN of the ACM certificate to enable HTTPS for the application. Example: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-56ef-78gh-90ij-klmnopqrstuv
+
+  YourDomainName:
+    Type: String
+    Description: >
+      The fully qualified custom domain name for the application. Example: app.example.com
+
+  HostedZoneId:
+    Type: String
+    Description: >
+      The Route 53 Hosted Zone ID associated with your domain. Example: Z1D633PJN98FT9
+
+  DesiredCapacity:
+    Type: Number
+    Default: 2
+    Description: >
+      The desired number of EC2 instances in the Auto Scaling Group.
+
+  MaxCapacity:
+    Type: Number
+    Default: 4
+    Description: >
+      The maximum number of EC2 instances in the Auto Scaling Group.
+
+  MinCapacity:
+    Type: Number
+    Default: 1
+    Description: >
+      The minimum number of EC2 instances in the Auto Scaling Group.
+
+  ClientIAMRoleArn:
+    Type: String
+    Description: >
+      The ARN of the IAM role that clients will use to create and access S3 resources. Example: arn:aws:iam::123456789012:role/YourClientRole
+
+  MLOpsDomainName:
+    Type: String
+    Description: >
+      The domain name to be used for the complitru-ai application endpoint. Example: mlops.example.com
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: complitru-ai-vpc
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet1Cidr
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+      - Key: Name
+        Value: complitru-ai-public-subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet2Cidr
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+      - Key: Name
+        Value: complitru-ai-public-subnet-2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+      - Key: Name
+        Value: complitru-ai-private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+      - Key: Name
+        Value: complitru-ai-private-subnet-2
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: complitru-ai-igw
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+      - Key: Name
+        Value: complitru-ai-natgw
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: complitru-ai-public-rt
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: complitru-ai-private-rt
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for complitru-ai RDS MySQL
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        CidrIp: !Ref AllowedCIDR
+      SecurityGroupEgress:
+      - IpProtocol: '-1'
+        CidrIp: 0.0.0.0/0
+
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for complitru-ai RDS
+      SubnetIds:
+      - !Ref PrivateSubnet1
+      - !Ref PrivateSubnet2
+
+  MyDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: complitru-ai-db
+      DBInstanceClass: !Ref RdsInstanceClass
+      Engine: mysql
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      AllocatedStorage: 20
+      PubliclyAccessible: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      StorageEncrypted: true
+      VPCSecurityGroups:
+      - !Ref RdsSecurityGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      Tags:
+      - Key: Name
+        Value: complitru-ai-mysql-db
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: complitru-ai
+
+  # --- REMOVE the following block ---
+  # ComplitruS3Bucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: complitru-ai-bucket
+  #     BucketEncryption:
+  #       ServerSideEncryptionConfiguration:
+  #         - ServerSideEncryptionByDefault:
+  #             SSEAlgorithm: AES256
+  #     PublicAccessBlockConfiguration:
+  #       BlockPublicAcls: true
+  #       BlockPublicPolicy: true
+  #       IgnorePublicAcls: true
+  #       RestrictPublicBuckets: true
+
+  # --- REMOVE the following block ---
+  # ComplitruS3BucketPolicy:
+  #   Type: AWS::S3::BucketPolicy
+  #   Properties:
+  #     Bucket: !Ref ComplitruS3Bucket
+  #     PolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Sid: AllowEC2RoleToAccessBucket
+  #           Effect: Allow
+  #           Principal:
+  #             AWS: !GetAtt EC2InstanceRole.Arn
+  #           Action:
+  #             - s3:GetObject
+  #             - s3:PutObject
+  #             - s3:ListBucket
+  #           Resource:
+  #             - !Sub "arn:aws:s3:::complitru-ai-bucket"
+  #             - !Sub "arn:aws:s3:::complitru-ai-bucket/*"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for complitru-ai Application Load Balancer
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref AllowedCIDR
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref AllowedCIDR
+      SecurityGroupEgress:
+      - IpProtocol: '-1'
+        CidrIp: 0.0.0.0/0
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      Name: complitru-ai-alb
+      Scheme: internet-facing
+      Subnets:
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
+      SecurityGroups:
+      - !Ref ALBSecurityGroup
+
+  ScaleOutPolicyCPU:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      PolicyType: SimpleScaling
+      AdjustmentType: ChangeInCapacity
+      ScalingAdjustment: 1
+      Cooldown: '300'
+
+  ScaleOutPolicyDisk:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      PolicyType: SimpleScaling
+      AdjustmentType: ChangeInCapacity
+      ScalingAdjustment: 1
+      Cooldown: '300'
+
+  CPUHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: complitru-ai-HighCPUAlarm
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref AutoScalingGroup
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+      - !Ref ScaleOutPolicyCPU
+      TreatMissingData: breaching
+
+  DiskUsageHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: complitru-ai-HighDiskUsageAlarm
+      Namespace: CWAgent
+      MetricName: disk_used_percent
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref AutoScalingGroup
+      - Name: path
+        Value: "/"
+      - Name: fstype
+        Value: "ext4"
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 90
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+      - !Ref ScaleOutPolicyDisk
+      TreatMissingData: breaching
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: complitru-ai-ec2-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: complitru-ai-RDSAccessPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - rds:DescribeDBInstances
+            Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:db/complitru-ai-db"
+      - PolicyName: complitru-ai-S3AccessPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:PutObject
+            Resource:
+            - arn:aws:s3:::complitru-ai
+            - arn:aws:s3:::complitru-ai/*
+      - PolicyName: complitru-ai-SignalResourcePolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - cloudformation:SignalResource
+            Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+      - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      - arn:aws:iam::aws:policy/AWSSecurityHubFullAccess
+      - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+      - !Ref EC2InstanceRole
+
+  Route53Record:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref MLOpsDomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ALB.DNSName
+        HostedZoneId: !GetAtt ALB.CanonicalHostedZoneID
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for complitru-ai EC2 instances in Auto Scaling Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 1100
+        ToPort: 1100
+        SourceSecurityGroupId: !Ref ALBSecurityGroup
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        SourceSecurityGroupId: !Ref ALBSecurityGroup
+      SecurityGroupEgress:
+      - IpProtocol: '-1'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 587
+        ToPort: 587
+        CidrIp: 0.0.0.0/0
+
+  TargetGroup1100:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 1100
+      Protocol: HTTP
+      TargetType: instance
+      HealthCheckPath: /health  # Change to a specific health endpoint your app provides
+      HealthCheckPort: 1100
+      HealthCheckProtocol: HTTP
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5  # Add timeout setting
+      Matcher:  # Add status code matcher
+        HttpCode: "200-299"  # Accept any 2XX response as healthy
+
+  # --- REMOVE TargetGroup80 as it is unused ---
+  #  TargetGroup80:
+  #    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  #    Properties:
+  #      VpcId: !Ref VPC
+  #      Port: 80
+  #      Protocol: HTTP
+  #      TargetType: instance
+  #      HealthCheckPath: /
+  #      HealthCheckPort: traffic-port
+  #      HealthCheckProtocol: HTTP
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+      - Type: redirect
+        RedirectConfig:
+          Protocol: HTTPS
+          Port: '443'
+          StatusCode: HTTP_301
+
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+      - CertificateArn: !Ref ACMCertificateArn
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref TargetGroup1100 # <-- Forward to TargetGroup1100 instead of TargetGroup80
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: AutoScalingGroup
+    Properties:
+      Handle: !Ref WaitHandle
+      Timeout: 1800  # 30 minutes, adjust as needed
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MinSize: !Ref MinCapacity
+      MaxSize: !Ref MaxCapacity
+      DesiredCapacity: !Ref DesiredCapacity
+      VPCZoneIdentifier:
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
+      TargetGroupARNs:
+      - !Ref TargetGroup1100
+      LaunchTemplate:
+        LaunchTemplateId: !Ref ComplitruAILaunchTemplate
+        Version: !GetAtt ComplitruAILaunchTemplate.LatestVersionNumber
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 600
+
+  ComplitruAILaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    DependsOn: MyDBInstance
+    Properties:
+      LaunchTemplateName: complitru-ai-launch-template
+      LaunchTemplateData:
+        ImageId: ami-0e449927258d45bc4
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+        IamInstanceProfile:
+          Arn: !GetAtt EC2InstanceProfile.Arn
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            #set -e
+
+            #!/bin/bash
+
+            # Re-execute the script as root if not already running as root
+            if [ "$EUID" -ne 0 ]; then
+              echo "🔵 Script not running as root. Re-executing with sudo..."
+              exec sudo bash "$0" "$@"
+            fi
+
+            cd /home/ec2-user/
+
+            echo "🔵 Updating system packages..."
+            dnf update -y
+
+            echo "🔵 Installing curl..."
+            dnf install -y curl
+
+            echo "🔵 Installing required development tools for Python 3.11..."
+            dnf groupinstall -y "Development Tools"
+            dnf install -y gcc openssl-devel bzip2-devel libffi-devel wget make mariadb105 unzip sed
+
+            # Check if Python 3.11 is already installed
+            if ! command -v python3.11 >/dev/null 2>&1; then
+              echo "🔵 Python 3.11 not found. Installing Python 3.11..."
+              cd /usr/src
+              wget https://www.python.org/ftp/python/3.11.8/Python-3.11.8.tgz
+              echo "🔵 Extracting Python 3.11 archive..."
+              tar xzf Python-3.11.8.tgz
+              cd Python-3.11.8
+              echo "🔵 Building and installing Python 3.11..."
+              ./configure --enable-optimizations
+              make -j$(nproc)
+              make altinstall  # Avoid overwriting system Python
+            else
+              echo "✅ Python 3.11 already installed: $(python3.11 --version)"
+            fi
+
+            echo "✅ Python version installed: $(python3.11 --version)"
+
+            mkdir -p /root/.aws
+            touch /root/.aws/credentials
+
+            echo "🔵 Unzipping application..."
+            aws s3 cp s3://gms-eagle-insights-bucket/GMS-AI-sarva-dev-gms.zip /home/ec2-user/
+            cd /home/ec2-user/
+            if [ -f GMS-AI-sarva-dev-gms.zip ]; then
+              unzip -o GMS-AI-sarva-dev-gms.zip
+              mv GMS-AI-sarva-dev GMS-AI
+              cd GMS-AI
+            else
+              echo "❌ Application zip not found, aborting."
+              # Notify WaitCondition of failure
+              WAIT_CONDITION_URL='${WaitHandle}'
+              curl -X PUT -H 'Content-Type:' \
+                --data-binary '{"Status": "FAILURE", "Reason": "App zip not found", "UniqueId": "AppZip", "Data": "Failed"}' \
+                "$WAIT_CONDITION_URL"
+              exit 1
+            fi
+
+            echo "🔵 Installing Python dependencies..."
+            python3.11 -m pip install --upgrade pip
+            if [ -f requirements.txt ]; then
+              python3.11 -m pip install -r requirements.txt
+            else
+              echo "❌ requirements.txt not found, aborting."
+              WAIT_CONDITION_URL='${WaitHandle}'
+              curl -X PUT -H 'Content-Type:' \
+                --data-binary '{"Status": "FAILURE", "Reason": "requirements.txt not found", "UniqueId": "Requirements", "Data": "Failed"}' \
+                "$WAIT_CONDITION_URL"
+              exit 1
+            fi
+
+            echo "🔵 Checking for processes on port 1100..."
+            PORT=1100
+            PID=$(lsof -ti:$PORT)
+            if [ -n "$PID" ]; then
+              echo "Killing process running on port $PORT (PID: $PID)"
+              kill -9 $PID
+            else
+              echo "No process running on port $PORT"
+            fi
+
+            echo "🔵 Starting the application in background..."
+            nohup python3.11 run.py --host 0.0.0.0 --port 1100 &
+
+            echo "✅ Application deployed and running on port 1100!"
+
+            # Notify WaitCondition of success
+            WAIT_CONDITION_URL='${WaitHandle}'
+            curl -X PUT -H 'Content-Type:' \
+              --data-binary '{"Status": "SUCCESS", "Reason": "App deployed", "UniqueId": "AppDeploy", "Data": "All good"}' \
+              "$WAIT_CONDITION_URL"
+Outputs:
+  ALBDNSName:
+    Description: "The DNS name of the Application Load Balancer"
+    Value: !GetAtt ALB.DNSName
+  RDSInstanceEndpoint:
+    Description: "The endpoint address of the RDS instance"
+    Value: !GetAtt MyDBInstance.Endpoint.Address
+  S3BucketName:
+    Description: "The name of the S3 bucket"
+    Value: !Ref S3Bucket

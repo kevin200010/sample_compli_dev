@@ -1,0 +1,24 @@
+[
+  {
+    "Title": "Public S3 bucket",
+    "Resource": "arn:aws:s3:::example-bucket",
+    "Id": "s3-bucket-public",
+    "Description": "S3 bucket allows public access.",
+    "Severity": "HIGH",
+    "AwsAccountId": "123456789012",
+    "LastObservedAt": "2024-07-01T12:00:00Z",
+    "RecommendationUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+    "Details": {}
+  },
+  {
+    "Title": "Unpatched EC2 instance",
+    "Resource": "i-0123456789abcdef0",
+    "Id": "ec2-unpatched",
+    "Description": "EC2 instance is missing critical patches.",
+    "Severity": "CRITICAL",
+    "AwsAccountId": "123456789012",
+    "LastObservedAt": "2024-06-15T08:30:00Z",
+    "RecommendationUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/patch-manager.html",
+    "Details": {}
+  }
+]

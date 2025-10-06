@@ -1,0 +1,89 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-gradient-primary text-white d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 text-white">Compliance Reports</h6>
+                {% if json_report_url %}
+                <a href="{{ json_report_url }}"
+                   class="btn btn-sm btn-outline-light rounded-pill shadow-sm" target="_blank">
+                    <i class="fa fa-download"></i> JSON Report
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body px-3 pt-2 pb-4">
+                {% if compliance_report %}
+                <div class="table-responsive p-2">
+                    <table class="table align-items-center table-hover table-striped">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="text-center text-uppercase text-secondary text-xs font-weight-bold">#</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bold">Framework</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bold text-center">Total Findings</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bold text-center">Passed / Failed</th>
+                            <th class="text-uppercase text-secondary text-xs font-weight-bold text-center">Compliance %</th>
+                            <th class="text-center text-uppercase text-secondary text-xs font-weight-bold">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for report in compliance_report %}
+                        <tr class="align-middle">
+                            <td class="text-center">
+                                <img src="{{ compliance_logo_links.get(report.finding_name, url_for('static', filename='images/gmsLogo.png')) }}"
+                                     alt="logo" class="avatar" width="40">
+                            </td>
+                            <td class="fw-bold text-dark">
+                                <p class="mb-0 text-sm">{{ report.finding_name }}</p>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-sm bg-gradient-success">{{ report.total_findings }}</span>
+                            </td>
+                            <td class="text-center">
+                                <p class="text-sm mb-0"><span class="text-success fw-bold">{{ report.passed }}</span> /
+                                <span class="text-danger fw-bold">{{ report.failed }}</span></p>
+                            </td>
+                            <td class="align-middle text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span class="me-2 text-xs font-weight-bold">{{ report.compliance_percentage }}</span>
+                                    <div class="progress w-50 rounded-pill">
+                                        {% set percentage = report.compliance_percentage|replace('%', '')|float %}
+                                        <div aria-valuemax="100" aria-valuemin="0"
+                                             aria-valuenow="{{ percentage }}" class="progress-bar progress-bar-animated
+                                             {% if percentage >= 65 %} bg-success
+                                             {% elif percentage >= 50 %} bg-warning
+                                             {% else %} bg-danger {% endif %}"
+                                             role="progressbar"
+                                             style="width: {{ percentage }}%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ report.pdf_url }}"
+                                   class="btn btn-sm btn-outline-primary rounded-pill shadow-sm" target="_blank">
+                                    <i class="fa fa-download"></i> Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center my-4">
+                    <p>No compliance report available. Run a scan or check S3 configuration.</p>
+                    <form method="post" action="{{ url_for('account.start_checks', account_id=session.get('selected_account')) }}">
+                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill shadow-sm mt-3">
+                            <i class="fa fa-play-circle"></i> Run Scan
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
