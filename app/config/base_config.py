@@ -93,6 +93,10 @@ class BaseConfig:
 
     # OpenAI API Key
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    NOVA_SONIC_MODEL = os.getenv("NOVA_SONIC_MODEL", "gpt-4o-mini")
+    NOVA_SONIC_TRANSCRIBE_MODEL = os.getenv(
+        "NOVA_SONIC_TRANSCRIBE_MODEL", "whisper-1"
+    )
     UI_COLOR = os.getenv("GMS_UI_COLOR")
     GRADIENT_UI_COLOR = os.getenv("GMS_GRADIENT_UI_COLOR")
     LOGO = os.getenv("LOGO")
