@@ -1,3 +1,4 @@
+import base64
 import csv
 import hashlib
 import io
@@ -46,6 +47,7 @@ from app.py_scripts.s3Connection import download_from_s3
 from app.accounts.helpers import ensure_account_bucket
 from app.py_scripts.scrapeSecHub import run_securityhub_command
 from . import main
+from .nova_sonic import build_nova_sonic_context
 from .compliance import (
     run_prowler_checks_concurrently,
     generate_reports_data,
@@ -57,7 +59,7 @@ from .services import (
     fetch_and_cache_billing_data,
     compliance_logo_links,
 )
-from .. import db, cache, app
+from .. import db, cache, app, gpt_client
 from ..models.models import Accounts
 from ..py_scripts.removeAccount import remove_account
 
@@ -1224,6 +1226,126 @@ def gpt_result():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@main.route("/nova_sonic_agent", methods=["POST"])
+@login_required
+def nova_sonic_agent():
+    """Voice-enabled assistant that leverages account intelligence."""
+
+    if not app.config.get("OPENAI_API_KEY"):
+        return (
+            jsonify(
+                {
+                    "error": "Nova-Sonic agent is not configured. Contact your administrator.",
+                }
+            ),
+            503,
+        )
+
+    if not request.is_json:
+        return jsonify({"error": "JSON body expected"}), 415
+
+    payload = request.get_json() or {}
+    user_message = (payload.get("message") or "").strip()
+    audio_b64 = payload.get("audio")
+    transcription: str | None = None
+
+    if audio_b64:
+        if isinstance(audio_b64, str) and audio_b64.startswith("data:"):
+            audio_b64 = audio_b64.split(",", 1)[1]
+        try:
+            audio_bytes = base64.b64decode(audio_b64)
+        except (ValueError, TypeError) as exc:
+            return jsonify({"error": "Invalid audio payload", "details": str(exc)}), 400
+
+        audio_buffer = io.BytesIO(audio_bytes)
+        audio_buffer.name = payload.get("audio_filename", "nova-sonic.webm")
+
+        try:
+            transcript = gpt_client.audio.transcriptions.create(
+                model=app.config.get("NOVA_SONIC_TRANSCRIBE_MODEL", "whisper-1"),
+                file=audio_buffer,
+            )
+        except Exception as exc:  # pragma: no cover - depends on external service
+            current_app.logger.exception("Nova-Sonic transcription failed")
+            return (
+                jsonify({"error": "Failed to transcribe audio", "details": str(exc)}),
+                502,
+            )
+
+        transcription = getattr(transcript, "text", None)
+        if transcription and not user_message:
+            user_message = transcription
+
+    if not user_message:
+        return jsonify({"error": "Provide a question or audio clip to analyse."}), 400
+
+    account_alias = session.get("selected_account")
+    if not account_alias:
+        return (
+            jsonify({"error": "Select an AWS account before contacting Nova-Sonic."}),
+            400,
+        )
+
+    account_details = Accounts.query.filter_by(
+        id=account_alias, user_id=current_user.id
+    ).first()
+    if not account_details:
+        return jsonify({"error": "Account not found or not accessible."}), 404
+
+    context = build_nova_sonic_context(account_details, current_user)
+    context_payload = context.to_prompt_dict()
+    context_json = json.dumps(context_payload, indent=2)
+
+    system_prompt = (
+        "You are Nova-Sonic, a cloud compliance, security, vulnerability, and cost analysis "
+        "expert. You provide grounded guidance using the supplied AWS account intelligence. "
+        "Be concise but comprehensive, cite the data points you rely on, and highlight "
+        "material risks, compliance gaps, and optimisation opportunities. If critical data "
+        "is missing, state what is required.""
+    )
+
+    user_prompt = (
+        "Respond to the user question using the following account context.\n\n"
+        f"User question: {user_message}\n\n"
+        f"Account intelligence (JSON):\n{context_json}\n\n"
+        "Structure your answer with Markdown headings for 'Executive Summary', "
+        "'Key Findings', and 'Recommended Actions'. Include cost analysis, compliance "
+        "status, and security remediation recommendations.""
+    )
+
+    try:
+        completion = gpt_client.chat.completions.create(
+            model=app.config.get("NOVA_SONIC_MODEL", "gpt-4o-mini"),
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        response_message = completion.choices[0].message.content
+    except Exception as exc:  # pragma: no cover - depends on external service
+        current_app.logger.exception("Nova-Sonic completion failed")
+        return (
+            jsonify({"error": "Unable to generate Nova-Sonic response", "details": str(exc)}),
+            502,
+        )
+
+    response_html = markdown2.markdown(response_message)
+
+    return (
+        jsonify(
+            {
+                "message": response_message,
+                "html": response_html,
+                "transcription": transcription,
+                "context": context_payload,
+                "model": app.config.get("NOVA_SONIC_MODEL", "gpt-4o-mini"),
+            }
+        ),
+        200,
+    )
 
 
 # import boto3
